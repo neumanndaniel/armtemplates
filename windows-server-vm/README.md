@@ -1,0 +1,1 @@
+Windows Server with Microsoft Antimalware, VM Agent and Microsoft Monitoring Agent extension.
