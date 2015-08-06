@@ -1,0 +1,72 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newVMName": {
+      "value": "WSCP-01"
+    },
+    "vmSize": {
+      "value": "Standard_D1"
+    },
+    "adminUsername": {
+      "value": "Enter here your administrator user name"
+    },
+    "adminPassword": {
+      "value": "Enter here your administrator password"
+    },
+    "dnsNameForPublicIP": {
+      "value": "wscp-01"
+    },
+    "windowsOSVersion": {
+      "value": "2012-R2-Datacenter"
+    },
+    "location": {
+      "value": "West Europe"
+    },
+    "environment": {
+      "value": "development"
+    },
+    "availabilitySet": {
+      "value": "Windows-Server-Availability-Set"
+    },
+    "newVirtualNetworkName": {
+      "value": "Windows-Server-Network"
+    },
+    "addressPrefix": {
+      "value": "172.16.0.0/23"
+    },
+    "subnetName": {
+      "value": "Management"
+    },
+    "subnetPrefix": {
+      "value": "172.16.0.0/24"
+    },
+    "publicIPAddressType": {
+      "value": "Dynamic"
+    },
+    "newStorageAccountName": {
+      "value": "windowsserverstorage"
+    },
+    "storageAccountType": {
+      "value": "Standard_LRS"
+    },
+    "newNetworkSecurityGroup": {
+      "value": "Windows-Server-NSG"
+    },
+    "vmExtensionMalware": {
+      "value": "IaaSAntimalware"
+    },
+    "vmExtensionVMAgent": {
+      "value": "VMAccessAgent"
+    },
+    "vmExtensionMonitoringAgent": {
+      "value": "MicrosoftMonitoringAgent"
+    },
+    "monitoringAgentWorkspaceID": {
+      "value": "Enter here your Operational Insights workspace ID"
+    },
+    "monitoringAgentWorkspaceKey": {
+      "value": "Enter here your Operational Insights workspace access key"
+    }
+  }
+}
