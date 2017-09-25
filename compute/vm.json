@@ -1,0 +1,512 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password of the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username of the Virtual Machine."
+      }
+    },
+    "availabilitySet": {
+      "type": "string",
+      "metadata": {
+        "description": "Availability set"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual machine."
+      }
+    },
+    "publicIPAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Dynamic",
+        "Static"
+      ],
+      "metadata": {
+        "description": "Public IP address"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A5",
+        "Standard_A4",
+        "Standard_A6",
+        "Standard_A7",
+        "Basic_A0",
+        "Basic_A1",
+        "Basic_A2",
+        "Basic_A3",
+        "Basic_A4",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_D2_v2_Promo",
+        "Standard_D3_v2_Promo",
+        "Standard_D4_v2_Promo",
+        "Standard_D5_v2_Promo",
+        "Standard_D11_v2_Promo",
+        "Standard_D12_v2_Promo",
+        "Standard_D13_v2_Promo",
+        "Standard_D14_v2_Promo",
+        "Standard_F1",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F8",
+        "Standard_F16",
+        "Standard_A1_v2",
+        "Standard_A2m_v2",
+        "Standard_A2_v2",
+        "Standard_A4m_v2",
+        "Standard_A4_v2",
+        "Standard_A8m_v2",
+        "Standard_A8_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2",
+        "Standard_DS2_v2_Promo",
+        "Standard_DS3_v2_Promo",
+        "Standard_DS4_v2_Promo",
+        "Standard_DS5_v2_Promo",
+        "Standard_DS11_v2_Promo",
+        "Standard_DS12_v2_Promo",
+        "Standard_DS13_v2_Promo",
+        "Standard_DS14_v2_Promo",
+        "Standard_F1s",
+        "Standard_F2s",
+        "Standard_F4s",
+        "Standard_F8s",
+        "Standard_F16s",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_NV6",
+        "Standard_NV12",
+        "Standard_NV24",
+        "Standard_B1ms",
+        "Standard_B1s",
+        "Standard_B2ms",
+        "Standard_B2s",
+        "Standard_B4ms",
+        "Standard_B8ms",
+        "Standard_D2_v3",
+        "Standard_D4_v3",
+        "Standard_D8_v3",
+        "Standard_D16_v3",
+        "Standard_D32_v3",
+        "Standard_D64_v3",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3",
+        "Standard_D8s_v3",
+        "Standard_D16s_v3",
+        "Standard_D32s_v3",
+        "Standard_D64s_v3",
+        "Standard_E2_v3",
+        "Standard_E4_v3",
+        "Standard_E8_v3",
+        "Standard_E16_v3",
+        "Standard_E32_v3",
+        "Standard_E64_v3",
+        "Standard_E2s_v3",
+        "Standard_E4s_v3",
+        "Standard_E8s_v3",
+        "Standard_E16s_v3",
+        "Standard_E32s_v3",
+        "Standard_E64s_v3",
+        "Standard_H8",
+        "Standard_H16",
+        "Standard_H8m",
+        "Standard_H16m",
+        "Standard_H16r",
+        "Standard_H16mr",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS1",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5",
+        "Standard_L4s",
+        "Standard_L8s",
+        "Standard_L16s",
+        "Standard_L32s",
+        "Standard_NC6",
+        "Standard_NC12",
+        "Standard_NC24",
+        "Standard_NC24r",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11"
+      ],
+      "metadata": {
+        "description": "Size of the virtual machine."
+      }
+    },
+    "windowsOSVersion": {
+      "type": "string",
+      "allowedValues": [
+        "2016-Datacenter",
+        "2016-Datacenter-Server-Core",
+        "2016-Datacenter-with-Containers",
+        "2016-Nano-Server",
+        "2016-Datacenter-HUB"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
+      }
+    },
+    "linuxOSVersion": {
+      "type": "string",
+      "allowedValues": [
+        "16.04-LTS",
+        "16.04.0-LTS",
+        "16.10",
+        "17.04"
+      ],
+      "metadata": {
+        "description": "The Linux version for the VM. This will pick a fully patched image of this given Linux version."
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of VMs to create"
+      }
+    },
+    "numerationOfVMs": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Start numeration of VMs. E.g. Set value to 1 for DC1 and set value to 2 for DC2 if DC1 exists!"
+      }
+    },
+    "avset":{
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Whether the VM will be deployed to an AV set or not."
+      }
+    },
+    "pip":{
+      "type": "string",
+      "defaultValue": "yes",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Whether the VM will have a public IP or not."
+      }
+    },
+    "windows":{
+      "type": "string",
+      "defaultValue": "yes",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Whether the VM will have a Windows or Linux as OS."
+      }
+    },
+    "storageAccountLogName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account used to store the boot diagnostic logs."
+      }
+    }
+  },
+  "variables": {
+    "imageOfferWindows": "WindowsServer",
+    "imagePublisherWindows": "MicrosoftWindowsServer",
+    "imageOfferLinux": "UbuntuServer",
+    "imagePublisherLinux": "Canonical",
+    "nicName": "-nic1",
+    "OSDiskName": "-osdisk",
+    "publicIPAddressName": "-publicip1",
+    "resourceGroupNetwork": "Network",
+    "resourceGroupStorage": "Storage",
+    "vmExtensionBGInfo": "BGInfo",
+    "availabilitySet": {
+      "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
+    },
+    "windowsConfiguration": {
+            "provisionVmAgent": true,
+            "enableAutomaticUpdates": true
+    }
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('avset'),'yes')]",
+      "apiVersion": "[providers('Microsoft.Compute','availabilitySets').apiVersions[0]]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('availabilitySet')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Aligned"
+      },
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 5
+      }
+    },
+    {
+      "condition": "[equals(parameters('pip'),'yes')]",
+      "apiVersion": "[providers('Microsoft.Network','publicIPAddresses').apiVersions[0]]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('publicIPAddressName'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "publicIPLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs'))))]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('pip'),'yes')]",
+      "apiVersion": "[providers('Microsoft.Network','networkInterfaces').apiVersions[0]]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('nicName'),'-pip')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('publicIPAddressName')))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId(variables('resourceGroupNetwork'),'Microsoft.Network/virtualNetworks',parameters('virtualNetworkName')),'/subnets/',parameters('subnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "condition": "[equals(parameters('pip'),'no')]",
+      "apiVersion": "[providers('Microsoft.Network','networkInterfaces').apiVersions[0]]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('nicName'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId(variables('resourceGroupNetwork'),'Microsoft.Network/virtualNetworks',parameters('virtualNetworkName')),'/subnets/',parameters('subnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[providers('Microsoft.Compute','virtualMachines').apiVersions[0]]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/',parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('nicName'),'-pip')]",
+        "[concat('Microsoft.Network/networkInterfaces/',parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('nicName'))]",
+        "[concat('Microsoft.Compute/availabilitySets/',parameters('availabilitySet'))]"
+      ],
+      "properties": {
+        "availabilitySet": "[if(equals(parameters('avset'),'yes'), variables('availabilitySet'), json('null'))]",
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": "[if(equals(parameters('windows'),'yes'), variables('windowsConfiguration'), json('null'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[if(equals(parameters('windows'),'yes'), variables('imagePublisherWindows'), variables('imagePublisherLinux'))]",
+            "offer": "[if(equals(parameters('windows'),'yes'), variables('imageOfferWindows'), variables('imageOfferLinux'))]",
+            "sku": "[if(equals(parameters('windows'),'yes'), parameters('windowsOSVersion'), parameters('linuxOSVersion'))]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('OSDiskName'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+             "id": "[if(equals(parameters('pip'),'yes'), resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('nicName'),'-pip')), resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs')),variables('nicName'))))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(concat(subscription().id,'/resourceGroups/',variables('resourceGroupStorage'),'/providers/Microsoft.Storage/storageAccounts/',parameters('storageAccountLogName')),providers('Microsoft.Storage','storageAccounts').apiVersions[0]).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "condition": "[equals(parameters('windows'),'yes')]",
+          "apiVersion": "[providers('Microsoft.Compute','virtualMachines/extensions').apiVersions[0]]",
+          "type": "extensions",
+          "name": "[variables('vmExtensionBGInfo')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs'))))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "BGInfo",
+            "typeHandlerVersion": "2.1",
+            "autoUpgradeMinorVersion": true,
+            "settings": {},
+            "protectedSettings": null
+          }
+        },
+        {
+          "apiVersion": "[providers('Microsoft.DevTestLab','labs').apiVersions[0]]",
+          "type": "microsoft.devtestlab/schedules",
+          "name": "[concat('shutdown-computevm-',parameters('vmName'),copyIndex(parameters('numerationOfVMs')))]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs'))))]"
+          ],
+          "properties": {
+            "status": "Enabled",
+            "taskType": "ComputeVmShutdownTask",
+            "dailyRecurrence": {
+              "time": "1900"
+            },
+            "timeZoneId": "W. Europe Standard Time",
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 15
+            },
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',concat(parameters('vmName'),copyIndex(parameters('numerationOfVMs'))))]"
+            }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "apiVersionVM": {
+      "type": "string",
+      "value": "[providers('Microsoft.Compute','virtualMachines').apiVersions[0]]"
+    },
+    "apiVersionVMExtensions": {
+      "type": "string",
+      "value": "[providers('Microsoft.Compute','virtualMachines/extensions').apiVersions[0]]"
+    },
+    "apiVersionStorage": {
+      "type": "string",
+      "value": "[providers('Microsoft.Storage','storageAccounts').apiVersions[0]]"
+    },
+    "apiVersionNIC": {
+      "type": "string",
+      "value": "[providers('Microsoft.Network','networkInterfaces').apiVersions[0]]"
+    },
+    "apiVersionPublicIP": {
+      "type": "string",
+      "value": "[providers('Microsoft.Network','publicIPAddresses').apiVersions[0]]"
+    },
+    "apiVersionAvailabilitySets": {
+      "type": "string",
+      "value": "[providers('Microsoft.Compute','availabilitySets').apiVersions[0]]"
+    },
+    "apiVersionLab": {
+      "type": "string",
+      "value": "[providers('Microsoft.DevTestLab','labs').apiVersions[0]]"
+    }
+  }
+}
