@@ -1,0 +1,176 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Address prefix"
+      }
+    },
+    "dnsServers": {
+      "type": "array",
+      "metadata": {
+        "description": "DNS servers"
+      }
+    },
+    "customDNS":{
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Sets the DNS server to Azure default or custom value"
+      }
+    },
+    "subnetInfraName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet name"
+      }
+    },
+    "subnetGatewaySubnetName": {
+      "type": "string",
+      "allowedValues": [
+        "GatewaySubnet"
+      ],
+      "metadata": {
+        "description": "Subnet name"
+      }
+    },
+    "subnetInfraPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet prefix"
+      }
+    },
+    "subnetGatewaySubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet prefix"
+      }
+    },
+    "allowedPorts": {
+      "type": "array",
+      "metadata": {
+        "description": "Define allowed inbound ports"
+      }
+    }
+  },
+  "variables":{
+    "basePorts": [
+      22,
+      3389
+    ],
+    "allPorts": "[concat(variables('basePorts'), parameters('allowedPorts'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[providers('Microsoft.Network','networkSecurityGroups').apiVersions[0]]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(parameters('virtualNetworkName'),'-', parameters('subnetInfraName'),'-nsg')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "copy": [
+          {
+            "name": "securityRules",
+            "count": "[length(variables('allPorts'))]",
+            "input":{
+              "name": "[concat('enabledPort', variables('allPorts')[copyIndex('securityRules')])]",
+              "properties": {
+                "description": "[concat('Enabled Port ', variables('allPorts')[copyIndex('securityRules')])]",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "[variables('allPorts')[copyIndex('securityRules')]]",
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "[parameters('subnetInfraPrefix')]",
+                "access": "Allow",
+                "priority": "[add(100, copyIndex('securityRules'))]",
+                "direction": "Inbound"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[providers('Microsoft.Network','routeTables').apiVersions[0]]",
+      "type": "Microsoft.Network/routeTables",
+      "name": "[concat(parameters('virtualNetworkName'),'-', parameters('subnetInfraName'),'-udr')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "routes": []
+      }
+    },
+    {
+      "apiVersion": "[providers('Microsoft.Network','virtualNetworks').apiVersions[0]]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', concat(parameters('virtualNetworkName'),'-', parameters('subnetInfraName'),'-nsg'))]",
+        "[concat('Microsoft.Network/routeTables/', concat(parameters('virtualNetworkName'),'-', parameters('subnetInfraName'),'-udr'))]"
+      ],
+      "properties": {
+        "dhcpOptions": {
+          "dnsServers": "[if(equals(parameters('customDNS'),'yes'), parameters('dnsServers'), json('null'))]"
+        },
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetInfraName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetInfraPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('virtualNetworkName'),'-', parameters('subnetInfraName'),'-nsg'))]"
+              },
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', concat(parameters('virtualNetworkName'),'-', parameters('subnetInfraName'),'-udr'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('subnetGatewaySubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetGatewaySubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    }  
+  ],
+  "outputs": {
+    "apiVersionNSG": {
+      "type": "string",
+      "value": "[providers('Microsoft.Network','networkSecurityGroups').apiVersions[0]]"
+    },
+    "apiVersionRouteTable": {
+      "type": "string",
+      "value": "[providers('Microsoft.Network','routeTables').apiVersions[0]]"
+    },
+    "apiVersionVNET": {
+      "type": "string",
+      "value": "[providers('Microsoft.Network','virtualNetworks').apiVersions[0]]"
+    },
+    "apiVersionDeployments": {
+      "type": "string",
+      "value": "[providers('Microsoft.Resources','deployments').apiVersions[0]]"
+    },
+		"enabledPorts": {
+      "type": "array",
+      "value": "[variables('allPorts')]"
+		}
+  }
+}
