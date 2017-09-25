@@ -1,0 +1,57 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[providers('Microsoft.Storage','storageAccounts').apiVersions[0]]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[toLower(parameters('storageAccountName'))]",
+      "location": "[resourceGroup().location]",
+      "kind": "Storage",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "properties": {
+        "encryption":{
+          "keySource":"Microsoft.Storage",
+          "services":{
+            "blob":{
+              "enabled":true
+            },	
+            "file":{
+              "enabled":true
+            }
+          }
+        },
+        "supportsHttpsTrafficOnly":true
+      }
+    }
+  ],
+  "outputs": {
+    "apiVersionStorage": {
+      "type": "string",
+      "value": "[providers('Microsoft.Storage','storageAccounts').apiVersions[0]]"
+    }
+  }
+}
