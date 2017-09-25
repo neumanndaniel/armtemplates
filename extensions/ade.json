@@ -1,0 +1,164 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "array",
+      "metadata": {
+        "description": "Name of the virtual machine."
+      }
+    },
+    "aadClientID": {
+      "type": "string",
+      "metadata": {
+        "description": "Client ID of AAD app which has permissions to Key Vault"
+      }
+    },
+    "aadClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Client Secret of AAD app which has permissions to Key Vault"
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Key Vault to place the volume encryption key"
+      }
+    },
+    "keyEncryptionKeyURL": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "URL of the key encryption key used to encrypt the volume encryption key"
+      }
+    },
+    "windows":{
+      "type": "string",
+      "defaultValue": "yes",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Whether the VM will have a Windows or Linux as OS."
+      }
+    }
+  },
+  "variables": {
+    "vmExtensionBitLocker": "BitLocker",
+    "vmExtensiondmcrypt": "dm-crypt",
+    "volumeType": "All",
+    "sequenceVersion": "1",
+    "passPhrase":"2801a0ec200f498dbb39569de39200af",
+    "encryptionOperation": "EnableEncryption",
+    "keyEncryptionAlgorithm": "RSA-OAEP",
+    "keyVaultURL": "[concat('https://', parameters('keyVaultName'),'.vault.azure.net/')]",
+    "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/Security','/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('windows'),'yes')]",
+      "apiVersion": "[providers('Microsoft.Compute','virtualMachines/extensions').apiVersions[0]]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName')[copyIndex('virtualMachineLoop')],'/',variables('vmExtensionBitLocker'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[length(parameters('vmName'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "AzureDiskEncryption",
+        "typeHandlerVersion": "1.1",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[variables('sequenceVersion')]",
+        "settings": {
+          "AADClientID": "[parameters('aadClientID')]",
+          "KeyVaultURL": "[variables('keyVaultURL')]",
+          "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+          "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
+          "VolumeType": "[variables('volumeType')]",
+          "EncryptionOperation": "[variables('encryptionOperation')]"
+        },
+        "protectedSettings": {
+          "AADClientSecret": "[parameters('aadClientSecret')]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('windows'),'no')]",
+      "apiVersion": "[providers('Microsoft.Compute','virtualMachines/extensions').apiVersions[0]]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName')[copyIndex('virtualMachineLoop')],'/',variables('vmExtensiondmcrypt'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[length(parameters('vmName'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "AzureDiskEncryptionForLinux",
+        "typeHandlerVersion": "0.1",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[variables('sequenceVersion')]",
+        "settings": {
+          "AADClientID": "[parameters('aadClientID')]",
+          "KeyVaultURL": "[variables('keyVaultURL')]",
+          "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+          "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
+          "VolumeType": "[variables('volumeType')]",
+          "EncryptionOperation": "[variables('encryptionOperation')]"
+        },
+        "protectedSettings": {
+          "AADClientSecret": "[parameters('aadClientSecret')]",
+          "Passphrase": "[variables('passPhrase')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[providers('Microsoft.Compute','virtualMachines').apiVersions[0]]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')[copyIndex('virtualMachineLoop')]]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[length(parameters('vmName'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName')[copyIndex('virtualMachineLoop')],'/extensions/',variables('vmExtensionBitLocker'))]",
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName')[copyIndex('virtualMachineLoop')],'/extensions/',variables('vmExtensiondmcrypt'))]"
+      ],
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "encryptionSettings": {
+              "diskEncryptionKey": {
+                "sourceVault": {
+                  "id": "[variables('keyVaultResourceID')]"
+                },
+                "secretUrl": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',parameters('vmName')[copyIndex('virtualMachineLoop')],if(equals(parameters('windows'),'yes'),variables('vmExtensionBitLocker'),variables('vmExtensiondmcrypt')))).instanceView.statuses[0].message]"
+              },
+              "keyEncryptionKey": {
+                "sourceVault": {
+                  "id": "[variables('keyVaultResourceID')]"
+                },
+                "keyUrl": "[parameters('keyEncryptionKeyURL')]"
+              }
+            }
+          }
+        }
+      }    
+    }
+  ],
+  "outputs": {
+    "apiVersionVM": {
+      "type": "string",
+      "value": "[providers('Microsoft.Compute','virtualMachines').apiVersions[0]]"
+    },
+    "apiVersionVMExtensions": {
+      "type": "string",
+      "value": "[providers('Microsoft.Compute','virtualMachines/extensions').apiVersions[0]]"
+    }
+  }
+}
