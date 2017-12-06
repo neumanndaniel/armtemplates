@@ -30,8 +30,8 @@ else
     echo 'apply_updates value is already set to yes!'
 fi
 
-systemctl start yum-cron.service
-systemctl enable yum-cron.service
+sudo systemctl start yum-cron.service
+sudo systemctl enable yum-cron.service
 
 #Install Apache and configure it for auto start
 sudo yum install -y httpd
