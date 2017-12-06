@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #Install updates
-sudo yum update -y
+yum update -y
 
 #Configure automated updates
-sudo yum install -y yum-cron
+yum install -y yum-cron
 
 if [ $(grep -c 'update_messages = no' /etc/yum/yum-cron.conf) -eq 1 ]
 then
@@ -30,10 +30,10 @@ else
     echo 'apply_updates value is already set to yes!'
 fi
 
-sudo systemctl start yum-cron.service
-sudo systemctl enable yum-cron.service
+systemctl start yum-cron.service
+systemctl enable yum-cron.service
 
 #Install Apache and configure it for auto start
-sudo yum install -y httpd
-sudo systemctl start httpd.service
-sudo systemctl enable httpd.service
+yum install -y httpd
+systemctl start httpd.service
+systemctl enable httpd.service
