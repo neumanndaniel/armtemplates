@@ -43,17 +43,9 @@ echo 'Getting empty data disk and create primary partition...'
 lsblk > disk.conf
 if [ $(grep -c 'sdc' disk.conf) -eq 1 ]
 then
-    #echo -e "n\np\n1\n\n\nw" | fdisk /dev/sdc
-
-    parted /dev/sdc mklabel msdos
+    echo -e "n\np\n1\n\n\nw" | fdisk /dev/sdc
 
     sleep 10
-
-    parted -a opt /dev/sdc mkpart primary ext4 0% 100%
-
-    sleep 10
-
-    partprobe -s
 
     echo 'Formatting new primary partition with ext4 file system...'
     mkfs.ext4 -L mysqldb /dev/sdc1
