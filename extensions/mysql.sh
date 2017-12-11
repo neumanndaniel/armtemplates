@@ -47,7 +47,11 @@ then
 
     parted /dev/sdc mklabel msdos
 
+    sleep 10
+
     parted -a opt /dev/sdc mkpart primary ext4 0% 100%
+
+    sleep 10
 
     partprobe -s
 
