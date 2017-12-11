@@ -44,17 +44,19 @@ lsblk > disk.conf
 if [ $(grep -c 'sdc' disk.conf) -eq 1 ]
 then
     echo -e "n\np\n1\n\n\nw" | fdisk /dev/sdc
+
+    partprobe -s
+
+    echo 'Formatting new primary partition with ext4 file system...'
+    mkfs.ext4 -L /mysqldb /dev/sdc1
+
+    echo 'Creating mount point and mount the new primary partition...'
+    mkdir /mnt/mysqldb
+    mount /dev/sdc1 /mnt/mysqldb
+
+    echo 'Creating entry in /etc/fstab for the new primary partition...'
+    echo "LABEL=/mysqldb /mnt/mysqldb ext4 defaults,nofail 1 2" | tee -a /etc/fstab
 fi
-
-echo 'Formatting new primary partition with ext4 file system...'
-mkfs.ext4 -L /mysqldb /dev/sdc1
-
-echo 'Creating mount point and mount the new primary partition...'
-mkdir /mnt/mysqldb
-mount /dev/sdc1 /mnt/mysqldb
-
-echo 'Creating entry in /etc/fstab for the new primary partition...'
-echo "LABEL=/mysqldb /mnt/mysqldb ext4 defaults,nofail 1 2" | tee -a /etc/fstab
 
 #Install MySQL server
 echo 'Installing MySQL database server...'
