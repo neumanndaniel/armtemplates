@@ -54,6 +54,7 @@ then
     echo 'Creating mount point and mount the new primary partition...'
     mkdir /mnt/mysqldb
     mount /dev/sdc1 /mnt/mysqldb
+    chmod go+w /mnt/mysqldb
 
     echo 'Creating entry in /etc/fstab for the new primary partition...'
     echo "LABEL=mysqldb /mnt/mysqldb ext4 defaults,nofail 1 2" | tee -a /etc/fstab
