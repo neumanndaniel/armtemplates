@@ -56,10 +56,7 @@ then
     partprobe -s
 
     echo 'Formatting new primary partition with ext4 file system...'
-    sudo mkfs -t ext4 /dev/sdc1
-
-    e2label /dev/sdc1 mysqldb
-    #mkfs.ext4 -L mysqldb /dev/sdc1
+    mkfs.ext4 -L mysqldb /dev/sdc1
 
     echo 'Creating mount point and mount the new primary partition...'
     mkdir /mnt/mysqldb
