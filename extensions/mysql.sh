@@ -40,15 +40,16 @@ systemctl enable yum-cron.service
 
 #Partitioning data disk, formatting it with ext4 and mount it
 echo 'Getting empty data disk and create primary partition...'
-lsblk > disk.conf
-if [ $(grep -c 'sdc' disk.conf) -eq 1 ]
+lsblk | grep '256G' | cut -d ' ' -f1 > disk.conf
+disk=$(grep 'sd' disk.conf)
+if [ $(grep -c 'sd' disk.conf) -eq 1 ]
 then
-    echo -e "n\np\n1\n\n\nw" | fdisk /dev/sdc
+    echo -e "n\np\n1\n\n\nw" | fdisk /dev/$disk
 
     sleep 10
 
     echo 'Formatting new primary partition with ext4 file system...'
-    mkfs.ext4 -L mysqldb /dev/sdc1
+    mkfs.ext4 -L mysqldb /dev/$disk'1'
 
     echo 'Creating mount point and mount the new primary partition...'
     mkdir /mnt/mysqldb
