@@ -64,7 +64,7 @@ rpm -ivh mysql57-community-release-el7-11.noarch.rpm
 yum install -y mysql-server
 
 echo 'Starting mysqld.service and enable auto start...'
-systemctl start mysqld.servicemysq
+systemctl start mysqld.service
 systemctl enable mysqld.service
 
 echo 'Changing the root password...'
