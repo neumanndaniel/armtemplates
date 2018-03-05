@@ -5,7 +5,7 @@
     "storageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+        "description": "Unique DNS name for the storage account"
       }
     },
     "storageAccountType": {
@@ -18,40 +18,43 @@
         "Premium_LRS"
       ],
       "metadata": {
-        "description": "Storage Account type"
+        "description": "Storage account type"
       }
+    }
+  },
+  "variables": {
+    "apiVersion": {
+      "storage": "2017-10-01"
+    },
+    "storageConfiguration": {
+      "storageAccountName": "[parameters('storageAccountName')]",
+      "storageAccountType": "[parameters('storageAccountType')]"
     }
   },
   "resources": [
     {
-      "apiVersion": "[providers('Microsoft.Storage','storageAccounts').apiVersions[0]]",
+      "apiVersion": "[variables('apiVersion').storage]",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[toLower(parameters('storageAccountName'))]",
+      "name": "[toLower(variables('storageConfiguration').storageAccountName)]",
       "location": "[resourceGroup().location]",
-      "kind": "Storage",
+      "kind": "StorageV2",
       "sku": {
-        "name": "[parameters('storageAccountType')]"
+        "name": "[variables('storageConfiguration').storageAccountType]"
       },
       "properties": {
-        "encryption":{
-          "keySource":"Microsoft.Storage",
-          "services":{
-            "blob":{
-              "enabled":true
-            },	
-            "file":{
-              "enabled":true
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": true
+            },
+            "file": {
+              "enabled": true
             }
           }
         },
-        "supportsHttpsTrafficOnly":true
+        "supportsHttpsTrafficOnly": true
       }
     }
-  ],
-  "outputs": {
-    "apiVersionStorage": {
-      "type": "string",
-      "value": "[providers('Microsoft.Storage','storageAccounts').apiVersions[0]]"
-    }
-  }
+  ]
 }
