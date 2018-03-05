@@ -251,8 +251,8 @@
           "name": "aksClusterProperties",
           "count": "[parameters('numberofInstances')]",
           "input": {
-            "name": "[concat(parameters('clusterName'),copyIndex('aksClusterProperties', parameters('aksClusterNumeration')))]",
-            "value": "[resourceId('Microsoft.ContainerService/managedClusters/', concat(parameters('clusterName'),copyIndex('aksClusterProperties', parameters('aksClusterNumeration'))))]"
+            "name": "[concat(parameters('clusterName'),copyIndex('aksClusterProperties',parameters('aksClusterNumeration')))]",
+            "value": "[resourceId('Microsoft.ContainerService/managedClusters/',concat(parameters('clusterName'),copyIndex('aksClusterProperties',parameters('aksClusterNumeration'))))]"
           }
         }
       ]
