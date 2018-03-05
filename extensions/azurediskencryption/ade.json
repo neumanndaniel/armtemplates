@@ -1,0 +1,212 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "array",
+      "metadata": {
+        "description": "Name of the virtual machine(s)."
+      }
+    },
+    "aadApplicationId": {
+      "type": "string",
+      "metadata": {
+        "description": "Application id of the AAD app which has permissions to the Key Vault"
+      }
+    },
+    "aadApplicationSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Application secret of the AAD app which has permissions to the Key Vault"
+      }
+    },
+    "resourceGroupKeyVault": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group of the Key Vault"
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Key Vault to place the volume encryption key"
+      }
+    },
+    "keyEncryptionKeyURL": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "URL of the key encryption key used to encrypt the volume encryption key"
+      }
+    },
+    "operatingSystemSelection": {
+      "type": "string",
+      "defaultValue": "windows",
+      "allowedValues": [
+        "windows",
+        "linux"
+      ],
+      "metadata": {
+        "description": "Whether the VMs having a Windows or Linux as OS."
+      }
+    },
+    "volumeType": {
+      "type": "string",
+      "defaultValue": "All",
+      "allowedValues": [
+        "All",
+        "Data"
+      ],
+      "metadata": {
+        "description": "Select 'All' if you would like to encrypt all disks of the VM and 'Data' for only data disk encryption."
+      }
+    },
+    "passPhrase": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specify a strong passphrase as the data encryption key. Only required for Linux VMs"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": {
+      "compute": "2017-03-30"
+    },
+    "deploymentConfiguration": {
+      "aadApplicationId": "[parameters('aadApplicationId')]",
+      "aadApplicationSecret": "[parameters('aadApplicationSecret')]",
+      "keyVaultName": "[parameters('keyVaultName')]",
+      "keyVaultResourceGroup": "[parameters('resourceGroupKeyVault')]",
+      "keyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+      "operatingSystemSelection": "[parameters('operatingSystemSelection')]",
+      "volumeType": "[parameters('volumeType')]",
+      "passPhrase": "[parameters('passPhrase')]"
+    },
+    "vmConfiguration": {
+      "vmName": "[parameters('vmName')]"
+    },
+    "azureDiskEncryptionConfiguration": {
+      "vmExtensionBitLocker": "BitLocker",
+      "vmExtensiondmcrypt": "dm-crypt",
+      "sequenceVersion": "1",
+      "encryptionOperation": "EnableEncryption",
+      "keyEncryptionAlgorithm": "RSA-OAEP",
+      "keyVaultURL": "[concat('https://',parameters('keyVaultName'),'.vault.azure.net/')]",
+      "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('resourceGroupKeyVault'),'/providers/Microsoft.KeyVault/vaults/',parameters('keyVaultName'))]"
+    },
+    "outputArray": {
+      "copy": [
+        {
+          "name": "vmProperties",
+          "count": "[length(parameters('vmName'))]",
+          "input": {
+            "name": "[concat(parameters('vmName')[copyIndex('vmProperties')])]",
+            "value": "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('vmName')[copyIndex('vmProperties')]))]"
+          }
+        }
+      ]
+    }
+  },
+  "resources": [
+    {
+      "condition": "[equals(variables('deploymentConfiguration').operatingSystemSelection,'windows')]",
+      "apiVersion": "[variables('apiVersion').compute]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmConfiguration').vmName[copyIndex('virtualMachineLoop')],'/',variables('azureDiskEncryptionConfiguration').vmExtensionBitLocker)]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[length(variables('vmConfiguration').vmName)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "AzureDiskEncryption",
+        "typeHandlerVersion": "1.1",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[variables('azureDiskEncryptionConfiguration').sequenceVersion]",
+        "settings": {
+          "AADClientID": "[variables('deploymentConfiguration').aadApplicationId]",
+          "KeyVaultURL": "[variables('azureDiskEncryptionConfiguration').keyVaultURL]",
+          "KeyEncryptionKeyURL": "[variables('deploymentConfiguration').keyEncryptionKeyURL]",
+          "KeyEncryptionAlgorithm": "[variables('azureDiskEncryptionConfiguration').keyEncryptionAlgorithm]",
+          "VolumeType": "[variables('deploymentConfiguration').volumeType]",
+          "EncryptionOperation": "[variables('azureDiskEncryptionConfiguration').encryptionOperation]"
+        },
+        "protectedSettings": {
+          "AADClientSecret": "[variables('deploymentConfiguration').aadApplicationSecret]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(variables('deploymentConfiguration').operatingSystemSelection,'linux')]",
+      "apiVersion": "[variables('apiVersion').compute]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmConfiguration').vmName[copyIndex('virtualMachineLoop')],'/',variables('azureDiskEncryptionConfiguration').vmExtensiondmcrypt)]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[length(variables('vmConfiguration').vmName)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "AzureDiskEncryptionForLinux",
+        "typeHandlerVersion": "0.1",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[variables('azureDiskEncryptionConfiguration').sequenceVersion]",
+        "settings": {
+          "AADClientID": "[variables('deploymentConfiguration').aadApplicationId]",
+          "KeyVaultURL": "[variables('azureDiskEncryptionConfiguration').keyVaultURL]",
+          "KeyEncryptionKeyURL": "[variables('deploymentConfiguration').keyEncryptionKeyURL]",
+          "KeyEncryptionAlgorithm": "[variables('azureDiskEncryptionConfiguration').keyEncryptionAlgorithm]",
+          "VolumeType": "[variables('deploymentConfiguration').volumeType]",
+          "EncryptionOperation": "[variables('azureDiskEncryptionConfiguration').encryptionOperation]"
+        },
+        "protectedSettings": {
+          "AADClientSecret": "[variables('deploymentConfiguration').aadApplicationSecret]",
+          "Passphrase": "[variables('deploymentConfiguration').passPhrase]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').compute]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmConfiguration').vmName[copyIndex('virtualMachineLoop')]]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[length(variables('vmConfiguration').vmName)]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmConfiguration').vmName[copyIndex('virtualMachineLoop')],'/extensions/',variables('azureDiskEncryptionConfiguration').vmExtensionBitLocker)]",
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmConfiguration').vmName[copyIndex('virtualMachineLoop')],'/extensions/',variables('azureDiskEncryptionConfiguration').vmExtensiondmcrypt)]"
+      ],
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "encryptionSettings": {
+              "diskEncryptionKey": {
+                "sourceVault": {
+                  "id": "[variables('azureDiskEncryptionConfiguration').keyVaultResourceID]"
+                },
+                "secretUrl": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',variables('vmConfiguration').vmName[copyIndex('virtualMachineLoop')],if(equals(variables('deploymentConfiguration').operatingSystemSelection,'windows'),variables('azureDiskEncryptionConfiguration').vmExtensionBitLocker,variables('azureDiskEncryptionConfiguration').vmExtensiondmcrypt))).instanceView.statuses[0].message]"
+              },
+              "keyEncryptionKey": {
+                "sourceVault": {
+                  "id": "[variables('azureDiskEncryptionConfiguration').keyVaultResourceID]"
+                },
+                "keyUrl": "[variables('deploymentConfiguration').keyEncryptionKeyURL]"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "vmProperties": {
+      "type": "object",
+      "value": "[variables('outputArray')]"
+    }
+  }
+}
