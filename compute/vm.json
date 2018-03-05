@@ -181,10 +181,13 @@
       "defaultValue": "2016-Datacenter",
       "allowedValues": [
         "2016-Datacenter",
+        "2016-Datacenter-smalldisk",
         "2016-Datacenter-Server-Core",
+        "2016-Datacenter-Server-Core-smalldisk",
         "2016-Datacenter-with-Containers",
         "2016-Nano-Server",
-        "2016-Datacenter-HUB"
+        "Datacenter-Core-1709-smalldisk",
+        "Datacenter-Core-1709-with-Containers-smalldisk"
       ],
       "metadata": {
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version."
@@ -194,6 +197,9 @@
       "type": "string",
       "defaultValue": "7.4",
       "allowedValues": [
+        "7.2",
+        "7.2n",
+        "7.3",
         "7.4"
       ],
       "metadata": {
@@ -202,9 +208,13 @@
     },
     "imageVersionUbuntu": {
       "type": "string",
-      "defaultValue": "16.04-LTS",
+      "defaultValue": "16.04-DAILY-LTS",
       "allowedValues": [
-        "16.04-LTS"
+        "16.04-LTS",
+        "16.04-DAILY-LTS",
+        "17.10",
+        "17.10-DAILY",
+        "18.04-DAILY-LTS"
       ],
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
@@ -238,7 +248,7 @@
     "azureHybridBenefitWindows": {
       "type": "string",
       "defaultValue": "no",
-      "allowedValues":[
+      "allowedValues": [
         "yes",
         "no"
       ],
@@ -302,11 +312,11 @@
       "imagePublisherUbuntu": "Canonical",
       "imageVersionUbuntu": "[parameters('imageVersionUbuntu')]"
     },
-    "storageConfiguration":{
+    "storageConfiguration": {
       "bootDiagnostics": "[concat(uniqueString(resourceGroup().id),'bootdiag')]",
       "storageAccountType": "Standard_LRS"
     },
-    "vmConfiguration":{
+    "vmConfiguration": {
       "adminPassword": "[parameters('adminPassword')]",
       "adminUsername": "[parameters('adminUsername')]",
       "vmName": "[parameters('vmName')]",
@@ -319,7 +329,7 @@
     },
     "availabilitySet": {
       "id": {
-        "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
+        "id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('availabilitySet'))]"
       },
       "name": "[parameters('availabilitySet')]"
     },
@@ -333,8 +343,8 @@
           "name": "vmProperties",
           "count": "[parameters('numberofInstances')]",
           "input": {
-            "name": "[concat(parameters('vmName'),copyIndex('vmProperties', parameters('vmNumeration')))]",
-            "value": "[resourceId('Microsoft.Compute/virtualMachines', concat(parameters('vmName'),copyIndex('vmProperties', parameters('vmNumeration'))))]"
+            "name": "[concat(parameters('vmName'),copyIndex('vmProperties',parameters('vmNumeration')))]",
+            "value": "[resourceId('Microsoft.Compute/virtualMachines',concat(parameters('vmName'),copyIndex('vmProperties',parameters('vmNumeration'))))]"
           }
         }
       ]
@@ -351,18 +361,18 @@
         "name": "[variables('storageConfiguration').storageAccountType]"
       },
       "properties": {
-        "encryption":{
-          "keySource":"Microsoft.Storage",
-          "services":{
-            "blob":{
-              "enabled":true
+        "encryption": {
+          "keySource": "Microsoft.Storage",
+          "services": {
+            "blob": {
+              "enabled": true
             },
-            "file":{
-              "enabled":true
+            "file": {
+              "enabled": true
             }
           }
         },
-        "supportsHttpsTrafficOnly":true
+        "supportsHttpsTrafficOnly": true
       }
     },
     {
