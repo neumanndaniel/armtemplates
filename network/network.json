@@ -68,7 +68,7 @@
   },
   "variables": {
     "apiVersion": {
-      "network": "2017-10-01"
+      "network": "2018-01-01"
     },
     "basePorts": [
       22,
@@ -133,7 +133,7 @@
                 "sourceAddressPrefix": "Internet",
                 "destinationApplicationSecurityGroups": [
                   {
-                    "id": "[if(equals(variables('deploymentConfiguration').allowedPorts[copyIndex('securityRules')],'22'), variables('asgConfiguration').linux, variables('asgConfiguration').windows)]"
+                    "id": "[if(equals(variables('deploymentConfiguration').allowedPorts[copyIndex('securityRules')],22), variables('asgConfiguration').linux, variables('asgConfiguration').windows)]"
                   }
                 ],
                 "access": "Allow",
