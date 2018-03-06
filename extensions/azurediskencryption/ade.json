@@ -71,7 +71,7 @@
   },
   "variables": {
     "apiVersion": {
-      "compute": "2017-03-30"
+      "compute": "2017-12-01"
     },
     "deploymentConfiguration": {
       "aadApplicationId": "[parameters('aadApplicationId')]",
