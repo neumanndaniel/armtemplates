@@ -49,10 +49,16 @@
         "description": "Virtual Network name"
       }
     },
-    "subnetName": {
+    "virtualNetworkSubnetName": {
       "type": "string",
       "metadata": {
         "description": "Subnet name"
+      }
+    },
+    "applicationSecurityGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Application security group name"
       }
     },
     "vmSize": {
@@ -282,8 +288,8 @@
   },
   "variables": {
     "apiVersion": {
-      "compute": "2017-03-30",
-      "network": "2017-10-01",
+      "compute": "2017-12-01",
+      "network": "2018-01-01",
       "storage": "2017-10-01",
       "devTestLab": "2017-04-26-preview"
     },
@@ -298,7 +304,8 @@
     "networkConfiguration": {
       "resourceGroupVirtualNetwork": "[parameters('resourceGroupVirtualNetwork')]",
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
-      "subnetName": "[parameters('subnetName')]",
+      "virtualNetworkSubnetName": "[parameters('virtualNetworkSubnetName')]",
+      "applicationSecurityGroupName": "[parameters('applicationSecurityGroupName')]",
       "publicIpAddressType": "[parameters('publicIpAddressType')]"
     },
     "osConfiguration": {
@@ -429,8 +436,13 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('vmConfiguration').vmName,copyIndex(variables('deploymentConfiguration').vmNumeration),variables('namingSuffix').publicIPAddressName))]"
               },
               "subnet": {
-                "id": "[concat(resourceId(variables('networkConfiguration').resourceGroupVirtualNetwork,'Microsoft.Network/virtualNetworks',variables('networkConfiguration').virtualNetworkName),'/subnets/',variables('networkConfiguration').subnetName)]"
-              }
+                "id": "[concat(resourceId(variables('networkConfiguration').resourceGroupVirtualNetwork,'Microsoft.Network/virtualNetworks',variables('networkConfiguration').virtualNetworkName),'/subnets/',variables('networkConfiguration').virtualNetworkSubnetName)]"
+              },
+              "applicationSecurityGroups": [
+                {
+                  "id": "[concat(resourceId(variables('networkConfiguration').resourceGroupVirtualNetwork,'Microsoft.Network/applicationSecurityGroups',variables('networkConfiguration').applicationSecurityGroupName))]"
+                }
+              ]
             }
           }
         ]
@@ -453,8 +465,13 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[concat(resourceId(variables('networkConfiguration').resourceGroupVirtualNetwork,'Microsoft.Network/virtualNetworks',variables('networkConfiguration').virtualNetworkName),'/subnets/',variables('networkConfiguration').subnetName)]"
-              }
+                "id": "[concat(resourceId(variables('networkConfiguration').resourceGroupVirtualNetwork,'Microsoft.Network/virtualNetworks',variables('networkConfiguration').virtualNetworkName),'/subnets/',variables('networkConfiguration').virtualNetworkSubnetName)]"
+              },
+              "applicationSecurityGroups": [
+                {
+                  "id": "[concat(resourceId(variables('networkConfiguration').resourceGroupVirtualNetwork,'Microsoft.Network/applicationSecurityGroups',variables('networkConfiguration').applicationSecurityGroupName))]"
+                }
+              ]
             }
           }
         ]
