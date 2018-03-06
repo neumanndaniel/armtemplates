@@ -183,7 +183,8 @@
   },
   "variables": {
     "apiVersion": {
-      "compute": "2017-12-01"
+      "compute": "2017-12-01",
+      "devTestLab": "2017-04-26-preview"
     },
     "deploymentConfiguration": {
       "availabilitySetDeployment": "[parameters('availabilitySetDeployment')]",
@@ -239,7 +240,31 @@
             "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/',variables('storageConfiguration').bootDiagnostics),providers('Microsoft.Storage','storageAccounts').apiVersions[0]).primaryEndpoints.blob]"
           }
         }
-      }
+      },
+      "resources": [
+        {
+          "apiVersion": "[variables('apiVersion').devTestLab]",
+          "type": "Microsoft.DevTestLab/schedules",
+          "name": "[concat('shutdown-computevm-',variables('deploymentConfiguration').vmName)]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/',variables('deploymentConfiguration').vmName)]"
+          ],
+          "properties": {
+            "status": "Enabled",
+            "taskType": "ComputeVmShutdownTask",
+            "dailyRecurrence": {
+              "time": "2000"
+            },
+            "timeZoneId": "W. Europe Standard Time",
+            "notificationSettings": {
+              "status": "Disabled",
+              "timeInMinutes": 15
+            },
+            "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines',variables('deploymentConfiguration').vmName)]"
+          }
+        }
+      ]
     }
   ]
 }
