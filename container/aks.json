@@ -292,8 +292,8 @@
           }
         },
         "servicePrincipalProfile": {
-          "ClientId": "[variables('servicePrincipalProfile').servicePrincipalClientId]",
-          "Secret": "[variables('servicePrincipalProfile').servicePrincipalClientSecret]"
+          "clientId": "[variables('servicePrincipalProfile').servicePrincipalClientId]",
+          "secret": "[variables('servicePrincipalProfile').servicePrincipalClientSecret]"
         }
       }
     }
