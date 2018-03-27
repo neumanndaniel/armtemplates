@@ -1,0 +1,118 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace name"
+      }
+    },
+    "serviceTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standalone",
+        "PerNode"
+      ],
+      "metadata": {
+        "description": "Log Analytics service tier: Free, Standalone, or PerNode"
+      }
+    },
+    "dataRetention": {
+      "type": "int",
+      "defaultValue": 7,
+      "minValue": 7,
+      "maxValue": 730,
+      "metadata": {
+        "description": "Log Analytics number of days of retention. Free plans can only have 7 days, Standalone and OMS plans include 30 days for free"
+      }
+    },
+    "automationAccountName": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "Automation account name"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": {
+      "logAnalytics": "2017-03-15-preview",
+      "logAnalyticsSolutions": "2015-11-01-preview",
+      "automation": "2015-10-31"
+    },
+    "updates": {
+      "name": "[concat('Updates', '(', parameters('workspaceName'), ')')]",
+      "galleryName": "Updates"
+    },
+    "automationConfiguration":{
+      "automationAccountName": "[parameters('automationAccountName')]"
+    },
+    "logAnalyticsConfiguration": {
+      "workspaceName": "[parameters('workspaceName')]",
+      "serviceTier": "[parameters('serviceTier')]",
+      "dataRetention": "[parameters('dataRetention')]"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion').logAnalytics]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[variables('logAnalyticsConfiguration').workspaceName]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "Name": "[variables('logAnalyticsConfiguration').serviceTier]"
+        },
+        "retention": "[variables('logAnalyticsConfiguration').dataRetention]"
+      },
+      "resources": [
+        {
+          "apiVersion": "[variables('apiVersion').logAnalyticsSolutions]",
+          "location": "[resourceGroup().location]",
+          "name": "[variables('updates').name]",
+          "type": "Microsoft.OperationsManagement/solutions",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('updates').name)]",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsConfiguration').workspaceName)]"
+          ],
+          "properties": {
+            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsConfiguration').workspaceName)]"
+          },
+          "plan": {
+            "name": "[variables('updates').name]",
+            "publisher": "Microsoft",
+            "promotionCode": "",
+            "product": "[concat('OMSGallery/', variables('updates').galleryName)]"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "[variables('apiVersion').automation]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "name": "[variables('automationConfiguration').automationAccountName]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "name": "Basic"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').logAnalyticsSolutions]",
+      "type": "Microsoft.OperationalInsights/workspaces/linkedServices",
+      "name": "[concat(variables('logAnalyticsConfiguration').workspaceName, '/' , 'Automation')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsConfiguration').workspaceName)]",
+        "[concat('Microsoft.Automation/automationAccounts/', variables('automationConfiguration').automationAccountName)]"
+      ],
+      "properties": {
+        "resourceId": "[resourceId('Microsoft.Automation/automationAccounts/', variables('automationConfiguration').automationAccountName)]"
+      }
+    }
+  ]
+}
