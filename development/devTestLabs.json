@@ -1,0 +1,63 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "labName": {
+      "type": "string",
+      "metadata": {
+        "description": "Lab name"
+      }
+    },
+    "labStorageType": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ],
+      "metadata": {
+        "description": "Lab storage type"
+      }
+    },
+    "premiumDataDisks": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "description": "Data disk type"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": {
+      "devTestLab": "2016-05-15"
+    },
+    "deploymentConfiguration": {
+      "labName": "[parameters('labName')]",
+      "labStorageType": "[parameters('labStorageType')]",
+      "premiumDataDisks": "[parameters('premiumDataDisks')]"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion').devTestLab]",
+      "type": "Microsoft.DevTestLab/labs",
+      "name": "[variables('deploymentConfiguration').labName]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "labStorageType": "Standard",
+        "premiumDataDisks": "Disabled"
+      },
+      "resources": []
+    }
+  ],
+  "outputs": {
+    "labId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.DevTestLab/labs', variables('deploymentConfiguration').labName)]"
+    }
+  }
+}
