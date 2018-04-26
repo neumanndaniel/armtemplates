@@ -48,8 +48,8 @@
       "name": "[variables('deploymentConfiguration').labName]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "labStorageType": "Standard",
-        "premiumDataDisks": "Disabled"
+        "labStorageType": "[variables('deploymentConfiguration').labStorageType]",
+        "premiumDataDisks": "[variables('deploymentConfiguration').premiumDataDisks]"
       },
       "resources": []
     }
