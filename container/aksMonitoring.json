@@ -1,1 +1,96 @@
-
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "AKS cluster name"
+            }
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Log Analytics workspace name"
+            }
+        },
+        "workspaceResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Log Analytics workspace resource group name"
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": {
+            "aks": "2018-03-31",
+            "logAnalytics": "2017-03-15-preview",
+            "logAnalyticsSolutions": "2015-11-01-preview",
+            "resourceDeployments": "2017-05-10"
+        },
+        "containerInsights": {
+            "name": "[concat('ContainerInsights', '(', parameters('workspaceName'), ')')]",
+            "galleryName": "ContainerInsights"
+        },
+        "deploymentConfiguration": {
+            "clusterName": "[parameters('clusterName')]",
+            "aksResourceId": "[resourceId('Microsoft.ContainerService/managedClusters',parameters('clusterName'))]",
+            "workspaceName": "[parameters('workspaceName')]",
+            "workspaceResourceGroup": "[parameters('workspaceResourceGroup')]",
+            "workspaceResourceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces',parameters('workspaceName'))]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersion').aks]",
+            "type": "Microsoft.ContainerService/managedClusters",
+            "name": "[variables('deploymentConfiguration').clusterName]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "id": "[variables('deploymentConfiguration').aksResourceId]",
+                "addonProfiles": {
+                    "omsagent": {
+                        "enabled": true,
+                        "config": {
+                            "logAnalyticsWorkspaceResourceID": "[variables('deploymentConfiguration').workspaceResourceId]"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion').resourceDeployments]",
+            "type": "Microsoft.Resources/deployments",
+            "name": "[variables('containerInsights').name]",
+            "subscriptionId": "[subscription().subscriptionId]",
+            "resourceGroup": "[variables('deploymentConfiguration').workspaceResourceGroup]",
+            "properties": {
+                "mode": "Incremental",
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {},
+                    "variables": {},
+                    "resources": [
+                        {
+                            "apiVersion": "[variables('apiVersion').logAnalyticsSolutions]",
+                            "type": "Microsoft.OperationsManagement/solutions",
+                            "location": "[resourceGroup().location]",
+                            "name": "[variables('containerInsights').name]",
+                            "properties": {
+                                "workspaceResourceId": "[variables('deploymentConfiguration').workspaceResourceId]"
+                            },
+                            "plan": {
+                                "name": "[variables('containerInsights').name]",
+                                "product": "[concat('OMSGallery/', variables('containerInsights').galleryName)]",
+                                "promotionCode": "",
+                                "publisher": "Microsoft"
+                            }
+                        }
+                    ]
+                },
+                "parameters": {}
+            }
+        }
+    ]
+}
