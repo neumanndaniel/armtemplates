@@ -221,7 +221,7 @@
   },
   "variables": {
     "apiVersion": {
-      "aks": "2017-08-31"
+      "aks": "2018-03-31"
     },
     "linuxProfile": {
       "adminUsername": "[parameters('linuxAdminUsername')]",
