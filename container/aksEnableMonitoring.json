@@ -75,8 +75,9 @@
                         {
                             "apiVersion": "[variables('apiVersion').logAnalyticsSolutions]",
                             "type": "Microsoft.OperationsManagement/solutions",
-                            "location": "[resourceGroup().location]",
                             "name": "[variables('containerInsights').name]",
+                            "location": "[resourceGroup().location]",
+                            "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('containerInsights').name)]",
                             "properties": {
                                 "workspaceResourceId": "[variables('deploymentConfiguration').workspaceResourceId]"
                             },
