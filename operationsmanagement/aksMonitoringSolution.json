@@ -1,0 +1,93 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace name"
+      }
+    },
+    "serviceTier": {
+      "type": "string",
+      "defaultValue": "Free",
+      "allowedValues": [
+        "Free",
+        "Standalone",
+        "PerNode"
+      ],
+      "metadata": {
+        "description": "Log Analytics service tier: Free, Standalone, or PerNode"
+      }
+    },
+    "dataRetention": {
+      "type": "int",
+      "defaultValue": 7,
+      "minValue": 7,
+      "maxValue": 730,
+      "metadata": {
+        "description": "Log Analytics number of days of retention. Free plans can only have 7 days, Standalone and OMS plans include 30 days for free"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": {
+      "logAnalytics": "2017-03-15-preview",
+      "logAnalyticsSolutions": "2015-11-01-preview"
+    },
+    "containerInsights": {
+      "name": "[concat('ContainerInsights', '(', parameters('workspaceName'), ')')]",
+      "galleryName": "ContainerInsights"
+    },
+    "logAnalyticsConfiguration": {
+      "workspaceName": "[parameters('workspaceName')]",
+      "serviceTier": "[parameters('serviceTier')]",
+      "dataRetention": "[parameters('dataRetention')]"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion').logAnalytics]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[variables('logAnalyticsConfiguration').workspaceName]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "Name": "[variables('logAnalyticsConfiguration').serviceTier]"
+        },
+        "retention": "[variables('logAnalyticsConfiguration').dataRetention]"
+      },
+      "resources": [
+        {
+          "apiVersion": "[variables('apiVersion').logAnalyticsSolutions]",
+          "type": "Microsoft.OperationsManagement/solutions",
+          "name": "[variables('containerInsights').name]",
+          "location": "[resourceGroup().location]",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('containerInsights').name)]",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsConfiguration').workspaceName)]"
+          ],
+          "properties": {
+            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsConfiguration').workspaceName)]"
+          },
+          "plan": {
+            "name": "[variables('containerInsights').name]",
+            "publisher": "Microsoft",
+            "promotionCode": "",
+            "product": "[concat('OMSGallery/', variables('containerInsights').galleryName)]"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "workspaceId": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsConfiguration').workspaceName), variables('apiVersion').logAnalytics).customerId]"
+    },
+    "primaryKey": {
+      "type": "string",
+      "value": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', variables('logAnalyticsConfiguration').workspaceName), variables('apiVersion').logAnalytics).primarySharedKey]"
+    }
+  }
+}
