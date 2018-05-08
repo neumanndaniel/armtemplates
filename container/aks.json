@@ -177,12 +177,17 @@
         "1.7.7",
         "1.7.9",
         "1.7.12",
+        "1.7.15",
+        "1.7.16",
         "1.8.1",
         "1.8.2",
         "1.8.6",
         "1.8.7",
+        "1.8.10",
+        "1.8.11",
         "1.9.1",
-        "1.9.2"
+        "1.9.2",
+        "1.9.6"
       ],
       "metadata": {
         "description": "The version of Kubernetes."
@@ -196,7 +201,8 @@
         "eastus",
         "centralus",
         "canadacentral",
-        "canadaeast"
+        "canadaeast",
+        "westus2"
       ],
       "metadata": {
         "description": "Azure region for AKS deployment."
@@ -217,6 +223,104 @@
       "metadata": {
         "description": "Start numeration of AKS clusters. E.g. Set value to 1 for AKS1 and set value to 2 for AKS2 if AKS1 exists!"
       }
+    },
+    "maxPods": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Maximum number of pods that can run on a node."
+      },
+      "maxValue": 110
+    },
+    "customVnet": {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Specify if you want to deploy to a custom VNET."
+      }
+    },
+    "enableOmsAgent": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "boolean flag to turn on and off of omsagent addon"
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace name that has the Container Insights solution enabled"
+      }
+    },
+    "workspaceResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace resource group name"
+      }
+    },
+    "enableHttpApplicationRouting": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "boolean flag to turn on and off of http application routing"
+      }
+    },
+    "networkPlugin": {
+      "type": "string",
+      "defaultValue": "kubenet",
+      "allowedValues": [
+        "azure",
+        "kubenet"
+      ],
+      "metadata": {
+        "description": "Network plugin used for building Kubernetes network."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Virtual Network name"
+      }
+    },
+    "vnetSubnetName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name of virtual network subnet used for nodes and/or pods IP assignment."
+      }
+    },
+    "vnetResourceGroupName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource group of the Virtual Network"
+      }
+    },
+    "serviceCidr": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "A CIDR notation IP range from which to assign service cluster IPs."
+      }
+    },
+    "dnsServiceIp": {
+      "type": "string",
+      "defaultValue": "10.0.0.10",
+      "metadata": {
+        "description": "Containers DNS server IP address."
+      }
+    },
+    "dockerBridgeCidr": {
+      "type": "string",
+      "defaultValue": "172.17.0.1/16",
+      "metadata": {
+        "description": "A CIDR notation IP for Docker bridge."
+      }
     }
   },
   "variables": {
@@ -235,17 +339,31 @@
       "osDiskSizeGB": "[parameters('osDiskSizeGB')]",
       "agentCount": "[parameters('agentCount')]",
       "agentVmSize": "[parameters('agentVMSize')]",
-      "osType": "[parameters('osType')]"
+      "osType": "[parameters('osType')]",
+      "vnetSubnetId": "[concat(resourceId(parameters('vnetResourceGroupName'),'Microsoft.Network/virtualNetworks',parameters('vnetName')),'/subnets/',parameters('vnetSubnetName'))]"
     },
     "aksCluster": {
       "clusterName": "[parameters('clusterName')]",
       "dnsPrefix": "[parameters('clustername')]",
       "location": "[parameters('aksregion')]",
-      "kubernetesVersion": "[parameters('kubernetesVersion')]"
+      "kubernetesVersion": "[parameters('kubernetesVersion')]",
+      "maxPods": "[parameters('maxPods')]",
+      "enableOmsAgent": "[parameters('enableOmsAgent')]",
+      "enableHttpApplicationRouting": "[parameters('enableHttpApplicationRouting')]",
+      "workspaceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces',parameters('workspaceName'))]"
+    },
+    "networkConfiguration": {
+      "networkProfile": {
+        "networkPlugin": "[parameters('networkPlugin')]",
+        "serviceCidr": "[parameters('serviceCidr')]",
+        "dnsServiceIp": "[parameters('dnsServiceIp')]",
+        "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+      }
     },
     "deploymentConfiguration": {
       "numberOfInstances": "[parameters('numberOfInstances')]",
-      "aksClusterNumeration": "[parameters('aksClusterNumeration')]"
+      "aksClusterNumeration": "[parameters('aksClusterNumeration')]",
+      "customVnet": "[parameters('customVnet')]"
     },
     "outputArray": {
       "copy": [
@@ -272,7 +390,20 @@
       },
       "properties": {
         "kubernetesVersion": "[variables('aksCluster').kubernetesVersion]",
+        "enableRBAC": false,
+        "maxPods": "[variables('aksCluster').maxPods]",
         "dnsPrefix": "[concat(variables('aksCluster').dnsPrefix,copyIndex(variables('deploymentConfiguration').aksClusterNumeration))]",
+        "addonProfiles": {
+          "httpApplicationRouting": {
+            "enabled": "[variables('aksCluster').enableHttpApplicationRouting]"
+          },
+          "omsagent": {
+            "enabled": "[variables('aksCluster').enableOmsAgent]",
+            "config": {
+              "logAnalyticsWorkspaceResourceID": "[variables('aksCluster').workspaceId]"
+            }
+          }
+        },
         "agentPoolProfiles": [
           {
             "name": "agentpool",
@@ -280,9 +411,11 @@
             "count": "[variables('agentPoolProfiles').agentCount]",
             "vmSize": "[variables('agentPoolProfiles').agentVmSize]",
             "osType": "[variables('agentPoolProfiles').osType]",
-            "storageProfile": "ManagedDisks"
+            "storageProfile": "ManagedDisks",
+            "vnetSubnetID": "[if(equals(variables('deploymentConfiguration').customVnet,'yes'), variables('agentPoolProfiles').vnetSubnetId, json('null'))]"
           }
         ],
+        "networkProfile": "[if(equals(variables('deploymentConfiguration').customVnet,'yes'), variables('networkConfiguration').networkProfile, json('null'))]",
         "linuxProfile": {
           "adminUsername": "[variables('linuxProfile').adminUsername]",
           "ssh": {
