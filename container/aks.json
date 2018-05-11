@@ -26,7 +26,7 @@
       "minValue": 1,
       "maxValue": 100
     },
-    "agentVMSize": {
+    "agentVmSize": {
       "type": "string",
       "defaultValue": "Standard_B2s",
       "allowedValues": [
@@ -140,7 +140,7 @@
         "description": "User name for the Linux nodes."
       }
     },
-    "sshRSAPublicKey": {
+    "sshRsaPublicKey": {
       "type": "string",
       "metadata": {
         "description": "Configure all linux machines with the SSH RSA public key string. Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
@@ -329,7 +329,7 @@
     },
     "linuxProfile": {
       "adminUsername": "[parameters('linuxAdminUsername')]",
-      "sshRSAPublicKey": "[parameters('sshRSAPublicKey')]"
+      "sshRsaPublicKey": "[parameters('sshRsaPublicKey')]"
     },
     "servicePrincipalProfile": {
       "servicePrincipalClientId": "[parameters('servicePrincipalClientId')]",
@@ -338,7 +338,7 @@
     "agentPoolProfiles": {
       "osDiskSizeGB": "[parameters('osDiskSizeGB')]",
       "agentCount": "[parameters('agentCount')]",
-      "agentVmSize": "[parameters('agentVMSize')]",
+      "agentVmSize": "[parameters('agentVmSize')]",
       "osType": "[parameters('osType')]",
       "vnetSubnetId": "[concat(resourceId(parameters('vnetResourceGroupName'),'Microsoft.Network/virtualNetworks',parameters('vnetName')),'/subnets/',parameters('vnetSubnetName'))]"
     },
@@ -421,7 +421,7 @@
           "ssh": {
             "publicKeys": [
               {
-                "keyData": "[variables('linuxProfile').sshRSAPublicKey]"
+                "keyData": "[variables('linuxProfile').sshRsaPublicKey]"
               }
             ]
           }
