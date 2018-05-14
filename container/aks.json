@@ -148,14 +148,14 @@
     },
     "servicePrincipalClientId": {
       "metadata": {
-        "description": "The Servive Principal Client Id."
+        "description": "The Servive Principal client id."
       },
       "type": "securestring",
       "defaultValue": ""
     },
     "servicePrincipalClientSecret": {
       "metadata": {
-        "description": "The Service Principal Client Secret."
+        "description": "The Service Principal client secret."
       },
       "type": "securestring",
       "defaultValue": ""
@@ -201,8 +201,7 @@
         "eastus",
         "centralus",
         "canadacentral",
-        "canadaeast",
-        "westus2"
+        "canadaeast"
       ],
       "metadata": {
         "description": "Azure region for AKS deployment."
@@ -344,7 +343,7 @@
     },
     "aksCluster": {
       "clusterName": "[parameters('clusterName')]",
-      "dnsPrefix": "[parameters('clustername')]",
+      "dnsPrefix": "[parameters('clusterName')]",
       "location": "[parameters('aksregion')]",
       "kubernetesVersion": "[parameters('kubernetesVersion')]",
       "maxPods": "[parameters('maxPods')]",
