@@ -335,6 +335,7 @@
       "servicePrincipalClientSecret": "[parameters('servicePrincipalClientSecret')]"
     },
     "agentPoolProfiles": {
+      "maxPods": "[parameters('maxPods')]",
       "osDiskSizeGB": "[parameters('osDiskSizeGB')]",
       "agentCount": "[parameters('agentCount')]",
       "agentVmSize": "[parameters('agentVmSize')]",
@@ -346,7 +347,6 @@
       "dnsPrefix": "[parameters('clusterName')]",
       "location": "[parameters('aksregion')]",
       "kubernetesVersion": "[parameters('kubernetesVersion')]",
-      "maxPods": "[parameters('maxPods')]",
       "enableOmsAgent": "[parameters('enableOmsAgent')]",
       "enableHttpApplicationRouting": "[parameters('enableHttpApplicationRouting')]",
       "workspaceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces',parameters('workspaceName'))]"
@@ -390,7 +390,6 @@
       "properties": {
         "kubernetesVersion": "[variables('aksCluster').kubernetesVersion]",
         "enableRBAC": false,
-        "maxPods": "[variables('aksCluster').maxPods]",
         "dnsPrefix": "[concat(variables('aksCluster').dnsPrefix,copyIndex(variables('deploymentConfiguration').aksClusterNumeration))]",
         "addonProfiles": {
           "httpApplicationRouting": {
@@ -406,6 +405,7 @@
         "agentPoolProfiles": [
           {
             "name": "agentpool",
+            "maxPods": "[variables('agentPoolProfiles').maxPods]",
             "osDiskSizeGB": "[variables('agentPoolProfiles').osDiskSizeGB]",
             "count": "[variables('agentPoolProfiles').agentCount]",
             "vmSize": "[variables('agentPoolProfiles').agentVmSize]",
