@@ -147,18 +147,18 @@
       }
     },
     "servicePrincipalClientId": {
+      "type": "securestring",
       "metadata": {
         "description": "The Servive Principal client id."
-      },
-      "type": "securestring",
-      "defaultValue": ""
+      }
+
     },
     "servicePrincipalClientSecret": {
+      "type": "securestring",
       "metadata": {
         "description": "The Service Principal client secret."
-      },
-      "type": "securestring",
-      "defaultValue": ""
+      }
+
     },
     "osType": {
       "type": "string",
@@ -242,6 +242,17 @@
         "description": "Specify if you want to deploy to a custom VNET."
       }
     },
+    "enableAadAuthentication": {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Specify if you want to use Azure Active Directory for authentication."
+      }
+    },
     "enableOmsAgent": {
       "type": "bool",
       "defaultValue": true,
@@ -277,6 +288,17 @@
       ],
       "metadata": {
         "description": "Network plugin used for building Kubernetes network."
+      }
+    },
+    "networkPolicy": {
+      "type": "string",
+      "defaultValue": "calico",
+      "allowedValues": [
+        "calico",
+        "none"
+      ],
+      "metadata": {
+        "description": "Network policy used for building Kubernetes network."
       }
     },
     "vnetName": {
@@ -320,6 +342,30 @@
       "metadata": {
         "description": "A CIDR notation IP for Docker bridge."
       }
+    },
+    "aadClientAppId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Application id of the AAD client application"
+      }
+    },
+    "aadServerAppId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Application id of the AAD server application"
+      }
+    },
+    "aadServerAppSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Secret of the AAD server application"
+      }
+    },
+    "aadTenantId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Tenant id of the AAD tenant"
+      }
     }
   },
   "variables": {
@@ -351,6 +397,14 @@
       "enableHttpApplicationRouting": "[parameters('enableHttpApplicationRouting')]",
       "workspaceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces',parameters('workspaceName'))]"
     },
+    "identityConfiguration": {
+      "aadProfile": {
+        "clientAppId": "[parameters('aadClientAppId')]",
+        "serverAppId": "[parameters('aadServerAppId')]",
+        "serverAppSecret": "[parameters('aadServerAppSecret')]",
+        "tenantId": "[parameters('aadTenantId')]"
+      }
+    },
     "networkConfiguration": {
       "networkProfile": {
         "networkPlugin": "[parameters('networkPlugin')]",
@@ -359,10 +413,21 @@
         "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
       }
     },
+    "networkConfigurationWithPolicy": {
+      "networkProfile": {
+        "networkPlugin": "[parameters('networkPlugin')]",
+        "networkPolicy": "[parameters('networkPolicy')]",
+        "serviceCidr": "[parameters('serviceCidr')]",
+        "dnsServiceIp": "[parameters('dnsServiceIp')]",
+        "dockerBridgeCidr": "[parameters('dockerBridgeCidr')]"
+      }
+    },
     "deploymentConfiguration": {
       "numberOfInstances": "[parameters('numberOfInstances')]",
       "aksClusterNumeration": "[parameters('aksClusterNumeration')]",
-      "customVnet": "[parameters('customVnet')]"
+      "customVnet": "[parameters('customVnet')]",
+      "enableAadAuthentication": "[parameters('enableAadAuthentication')]",
+      "networkPolicy": "[parameters('networkPolicy')]"
     },
     "outputArray": {
       "copy": [
@@ -389,7 +454,7 @@
       },
       "properties": {
         "kubernetesVersion": "[variables('aksCluster').kubernetesVersion]",
-        "enableRBAC": false,
+        "enableRBAC": true,
         "dnsPrefix": "[concat(variables('aksCluster').dnsPrefix,copyIndex(variables('deploymentConfiguration').aksClusterNumeration))]",
         "addonProfiles": {
           "httpApplicationRouting": {
@@ -414,7 +479,7 @@
             "vnetSubnetID": "[if(equals(variables('deploymentConfiguration').customVnet,'yes'), variables('agentPoolProfiles').vnetSubnetId, json('null'))]"
           }
         ],
-        "networkProfile": "[if(equals(variables('deploymentConfiguration').customVnet,'yes'), variables('networkConfiguration').networkProfile, json('null'))]",
+        "networkProfile": "[if(equals(variables('deploymentConfiguration').networkPolicy,'none'),if(equals(variables('deploymentConfiguration').customVnet,'yes'), variables('networkConfiguration').networkProfile, json('null')),if(equals(variables('deploymentConfiguration').customVnet,'yes'), variables('networkConfigurationWithPolicy').networkProfile, json('null')))]",
         "linuxProfile": {
           "adminUsername": "[variables('linuxProfile').adminUsername]",
           "ssh": {
@@ -428,7 +493,8 @@
         "servicePrincipalProfile": {
           "clientId": "[variables('servicePrincipalProfile').servicePrincipalClientId]",
           "secret": "[variables('servicePrincipalProfile').servicePrincipalClientSecret]"
-        }
+        },
+        "aadProfile": "[if(equals(variables('deploymentConfiguration').enableAadAuthentication,'yes'), variables('identityConfiguration').aadProfile, json('null'))]"
       }
     }
   ],
