@@ -38,7 +38,8 @@
     "deploymentConfiguration": {
       "labName": "[parameters('labName')]",
       "labStorageType": "[parameters('labStorageType')]",
-      "premiumDataDisks": "[parameters('premiumDataDisks')]"
+      "premiumDataDisks": "[parameters('premiumDataDisks')]",
+      "labVirtualNetworkName": "[concat('Dtl', parameters('labName'))]"
     }
   },
   "resources": [
@@ -51,7 +52,16 @@
         "labStorageType": "[variables('deploymentConfiguration').labStorageType]",
         "premiumDataDisks": "[variables('deploymentConfiguration').premiumDataDisks]"
       },
-      "resources": []
+      "resources": [
+        {
+          "apiVersion": "[variables('apiVersion').devTestLab]",
+          "type": "virtualNetworks",
+          "name": "[variables('deploymentConfiguration').labVirtualNetworkName]",
+          "dependsOn": [
+            "[resourceId('Microsoft.DevTestLab/labs', variables('deploymentConfiguration').labName)]"
+          ]
+        }
+      ]
     }
   ],
   "outputs": {
