@@ -4,7 +4,7 @@ Clear-Host
 Write-Verbose 'STEP 1: Download Azure CLI:' -Verbose
 Write-Output 'STEP 1: Download Azure CLI:'
 try {
-    Invoke-WebRequest -Uri "https://azurecliprod.blob.core.windows.net/msi/azure-cli-latest.msi" -OutFile ./AzureCLI.msi -Verbose -ErrorAction Stop
+    Invoke-WebRequest -Uri "https://aka.ms/installazurecliwindows" -OutFile ./AzureCLI.msi -Verbose -ErrorAction Stop
 }
 catch {
     Write-Host $_
