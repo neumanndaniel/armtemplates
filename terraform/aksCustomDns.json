@@ -1,0 +1,124 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the AKS cluster."
+            }
+        },
+        "aksResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "AKS cluster resource group name"
+            }
+        },
+        "terraformResourceName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Terraform deployment."
+            }
+        },
+        "terraformResourceType": {
+            "type": "string",
+            "defaultValue": "kubernetes_config_map",
+            "allowedValues": [
+                "kubernetes_config_map",
+                "kubernetes_horizontal_pod_autoscaler",
+                "kubernetes_limit_range",
+                "kubernetes_namespace",
+                "kubernetes_persistent_volume",
+                "kubernetes_persistent_volume_claim",
+                "kubernetes_pod",
+                "kubernetes_replication_controller",
+                "kubernetes_resource_quota",
+                "kubernetes_secret",
+                "kubernetes_service",
+                "kubernetes_service_account",
+                "kubernetes_storage_class"
+            ],
+            "metadata": {
+                "description": "The name of the Terraform resource type."
+            }
+        },
+        "terraformResourceProviderLocation": {
+            "type": "string",
+            "defaultValue": "westcentralus",
+            "allowedValues": [
+                "westcentralus"
+            ],
+            "metadata": {
+                "description": "Terraform resource provider location."
+            }
+        },
+        "dnsZone": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the DNS zone."
+            }
+        },
+        "dnsServerIp": {
+            "type": "string",
+            "metadata": {
+                "description": "The DNS server ip address."
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": {
+            "aks": "2018-03-31",
+            "terraform": "2018-05-01-preview"
+        },
+        "deploymentConfiguration": {
+            "clusterName": "[parameters('clusterName')]",
+            "aksResourceGroup": "[parameters('aksResourceGroup')]",
+            "terraformLocation": "[parameters('terraformResourceProviderLocation')]",
+            "terraformResourceName": "[parameters('terraformResourceName')]",
+            "terraformResourceType": "[parameters('terraformResourceType')]",
+            "dnsZone": "[parameters('dnsZone')]",
+            "dnsServerIp": "[parameters('dnsServerIp')]"
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersion').terraform]",
+            "type": "Microsoft.TerraformOSS/providerregistrations",
+            "name": "[variables('deploymentConfiguration').clusterName]",
+            "location": "[variables('deploymentConfiguration').terraformLocation]",
+            "properties": {
+                "providertype": "kubernetes",
+                "settings": {
+                    "inline_config": "[Base64ToString(ListCredential(resourceId(subscription().subscriptionId,variables('deploymentConfiguration').aksResourceGroup,'Microsoft.ContainerService/managedClusters/accessProfiles',variables('deploymentConfiguration').clusterName,'clusterAdmin'),variables('apiVersion').aks).properties.kubeConfig)]"
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion').terraform]",
+            "type": "Microsoft.TerraformOSS/resources",
+            "name": "[variables('deploymentConfiguration').terraformResourceName]",
+            "location": "[variables('deploymentConfiguration').terraformLocation]",
+            "dependsOn": [
+                "[concat('Microsoft.TerraformOSS/providerregistrations/',variables('deploymentConfiguration').clusterName)]"
+            ],
+            "properties": {
+                "providerId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.TerraformOSS/providerregistrations/',variables('deploymentConfiguration').clusterName)]",
+                "resourcetype": "[variables('deploymentConfiguration').terraformResourceType]",
+                "settings": {
+                    "metadata": [
+                        {
+                            "name": "kube-dns",
+                            "namespace": "kube-system"
+                        }
+                    ],
+                    "data": [
+                        {
+                            "stubDomains": "[concat('{\"',variables('deploymentConfiguration').dnsZone,'\": [\"',variables('deploymentConfiguration').dnsServerIp,'\"]}\n')]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {}
+}
