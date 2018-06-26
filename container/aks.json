@@ -208,7 +208,6 @@
         "uksouth",
         "westus",
         "westus2"
-
       ],
       "metadata": {
         "description": "Azure region for AKS deployment."
