@@ -14,12 +14,12 @@ then
     curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
     if [ $(cat /etc/*_version|grep -c 'Ubuntu 16.04') -ge 1 ]
     then
-        sudo curl https://packages.microsoft.com/config/ubuntu/16.04/prod.list | sudo tee /etc/apt/sources.list.d/microsoft.list
+        sudo curl -o /etc/apt/sources.list.d/microsoft.list https://packages.microsoft.com/config/ubuntu/16.04/prod.list
     elif [ $(cat /etc/*_version|grep -c 'Ubuntu 18.04') -ge 1 ]
     then
-        sudo curl https://packages.microsoft.com/config/ubuntu/18.04/prod.list | sudo tee /etc/apt/sources.list.d/microsoft.list
+        sudo curl -o /etc/apt/sources.list.d/microsoft.list https://packages.microsoft.com/config/ubuntu/18.04/prod.list
     else
-        sudo curl https://packages.microsoft.com/config/ubuntu/17.04/prod.list | sudo tee /etc/apt/sources.list.d/microsoft.list
+        sudo curl -o /etc/apt/sources.list.d/microsoft.list https://packages.microsoft.com/config/ubuntu/17.10/prod.list
     fi
     sudo apt-get update
     sudo apt-get install -y powershell
