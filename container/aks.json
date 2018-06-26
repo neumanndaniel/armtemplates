@@ -187,7 +187,8 @@
         "1.8.11",
         "1.9.1",
         "1.9.2",
-        "1.9.6"
+        "1.9.6",
+        "1.10.3"
       ],
       "metadata": {
         "description": "The version of Kubernetes."
@@ -201,7 +202,13 @@
         "eastus",
         "centralus",
         "canadacentral",
-        "canadaeast"
+        "canadaeast",
+        "northeurope",
+        "australiaeast",
+        "uksouth",
+        "westus",
+        "westus2"
+
       ],
       "metadata": {
         "description": "Azure region for AKS deployment."
