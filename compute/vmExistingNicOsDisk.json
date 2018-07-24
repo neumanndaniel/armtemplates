@@ -123,10 +123,20 @@
         "Standard_L8s",
         "Standard_L16s",
         "Standard_L32s",
+        "Standard_M8ms",
+        "Standard_M16ms",
+        "Standard_M32ls",
+        "Standard_M32ms",
+        "Standard_M32ts",
         "Standard_M64s",
+        "Standard_M64ls",
         "Standard_M64ms",
         "Standard_M128s",
         "Standard_M128ms",
+        "Standard_M64",
+        "Standard_M64m",
+        "Standard_M128",
+        "Standard_M128m",
         "Standard_NC6",
         "Standard_NC12",
         "Standard_NC24",
@@ -141,7 +151,9 @@
         "Standard_ND24rs",
         "Standard_NV6",
         "Standard_NV12",
-        "Standard_NV24"
+        "Standard_NV24",
+        "Standard_L8s_v2",
+        "Standard_L16s_v2"
       ],
       "metadata": {
         "description": "Size of the virtual machine."
