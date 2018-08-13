@@ -172,7 +172,7 @@
     },
     "kubernetesVersion": {
       "type": "string",
-      "defaultValue": "1.7.7",
+      "defaultValue": "1.11.1",
       "allowedValues": [
         "1.7.7",
         "1.7.9",
@@ -191,7 +191,9 @@
         "1.9.6",
         "1.9.9",
         "1.10.3",
-        "1.10.5"
+        "1.10.5",
+        "1.10.6",
+        "1.11.1"
       ],
       "metadata": {
         "description": "The version of Kubernetes."
@@ -212,7 +214,8 @@
         "uksouth",
         "westus",
         "westus2",
-        "japaneast"
+        "japaneast",
+        "southeastasia"
       ],
       "metadata": {
         "description": "Azure region for AKS deployment."
