@@ -376,8 +376,8 @@
             "osType": "[variables('agentPoolProfiles').osType]",
             "vnetSubnetID": "[if(equals(variables('deploymentConfiguration').customVnet,'yes'), variables('agentPoolProfiles').vnetSubnetId, json('null'))]",
             "enableAutoScaling": "[if(equals(variables('agentPoolProfiles').type, 'VirtualMachineScaleSets'), variables('agentPoolProfiles').enableAutoScaling, json('null'))]",
-            "maxCount": "[if(equals(variables('agentPoolProfiles').type, 'VirtualMachineScaleSets'), variables('agentPoolProfiles').maxCount, json('null'))]",
-            "minCount": "[if(equals(variables('agentPoolProfiles').type, 'VirtualMachineScaleSets'), variables('agentPoolProfiles').minCount, json('null'))]",
+            "maxCount": "[if(equals(variables('agentPoolProfiles').type, 'VirtualMachineScaleSets'), if(variables('agentPoolProfiles').enableAutoScaling, variables('agentPoolProfiles').maxCount, json('null')), json('null'))]",
+            "minCount": "[if(equals(variables('agentPoolProfiles').type, 'VirtualMachineScaleSets'), if(variables('agentPoolProfiles').enableAutoScaling, variables('agentPoolProfiles').minCount, json('null')), json('null'))]",
             "type": "[variables('agentPoolProfiles').type]"
           }
         ],
