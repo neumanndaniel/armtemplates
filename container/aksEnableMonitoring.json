@@ -2,16 +2,10 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "clusterName": {
+        "name": {
             "type": "string",
             "metadata": {
                 "description": "AKS cluster name"
-            }
-        },
-        "workspaceName": {
-            "type": "string",
-            "metadata": {
-                "description": "Log Analytics workspace name"
             }
         },
         "workspaceResourceGroup": {
@@ -19,23 +13,25 @@
             "metadata": {
                 "description": "Log Analytics workspace resource group name"
             }
+        },
+        "workspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Log Analytics workspace name"
+            }
         }
     },
     "variables": {
         "apiVersion": {
-            "aks": "2019-02-01",
+            "aks": "2019-08-01",
             "logAnalyticsSolutions": "2015-11-01-preview",
             "resourceDeployments": "2018-05-01"
         },
         "containerInsights": {
-            "name": "[concat('ContainerInsights', '(', parameters('workspaceName'), ')')]",
-            "galleryName": "ContainerInsights"
+            "name": "[concat('ContainerInsights', '(', parameters('workspaceName'), ')')]"
         },
-        "deploymentConfiguration": {
-            "clusterName": "[parameters('clusterName')]",
-            "aksResourceId": "[resourceId('Microsoft.ContainerService/managedClusters',parameters('clusterName'))]",
-            "workspaceName": "[parameters('workspaceName')]",
-            "workspaceResourceGroup": "[parameters('workspaceResourceGroup')]",
+        "cluster": {
+            "resourceId": "[resourceId('Microsoft.ContainerService/managedClusters',parameters('name'))]",
             "workspaceResourceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces',parameters('workspaceName'))]"
         }
     },
@@ -43,15 +39,15 @@
         {
             "apiVersion": "[variables('apiVersion').aks]",
             "type": "Microsoft.ContainerService/managedClusters",
-            "name": "[variables('deploymentConfiguration').clusterName]",
+            "name": "[parameters('name')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "id": "[variables('deploymentConfiguration').aksResourceId]",
+                "id": "[variables('cluster').resourceId]",
                 "addonProfiles": {
                     "omsagent": {
                         "enabled": true,
                         "config": {
-                            "logAnalyticsWorkspaceResourceID": "[variables('deploymentConfiguration').workspaceResourceId]"
+                            "logAnalyticsWorkspaceResourceID": "[variables('cluster').workspaceResourceId]"
                         }
                     }
                 }
@@ -62,14 +58,16 @@
             "type": "Microsoft.Resources/deployments",
             "name": "[variables('containerInsights').name]",
             "subscriptionId": "[subscription().subscriptionId]",
-            "resourceGroup": "[variables('deploymentConfiguration').workspaceResourceGroup]",
+            "resourceGroup": "[parameters('workspaceResourceGroup')]",
             "properties": {
                 "mode": "Incremental",
                 "template": {
                     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
                     "contentVersion": "1.0.0.0",
-                    "parameters": {},
-                    "variables": {},
+                    "parameters": {
+                    },
+                    "variables": {
+                    },
                     "resources": [
                         {
                             "apiVersion": "[variables('apiVersion').logAnalyticsSolutions]",
@@ -78,18 +76,19 @@
                             "location": "[resourceGroup().location]",
                             "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('containerInsights').name)]",
                             "properties": {
-                                "workspaceResourceId": "[variables('deploymentConfiguration').workspaceResourceId]"
+                                "workspaceResourceId": "[variables('cluster').workspaceResourceId]"
                             },
                             "plan": {
                                 "name": "[variables('containerInsights').name]",
-                                "product": "[concat('OMSGallery/', variables('containerInsights').galleryName)]",
+                                "product": "OMSGallery/ContainerInsights",
                                 "promotionCode": "",
                                 "publisher": "Microsoft"
                             }
                         }
                     ]
                 },
-                "parameters": {}
+                "parameters": {
+                }
             }
         }
     ]

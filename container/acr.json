@@ -2,13 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "containerRegistryName": {
+    "name": {
       "type": "string",
       "metadata": {
-        "description": "The name of the container registry."
+        "description": "Container Registry name"
       }
     },
-    "containerRegistrySku": {
+    "sku": {
       "type": "string",
       "defaultValue": "Basic",
       "allowedValues": [
@@ -17,7 +17,7 @@
         "Premium"
       ],
       "metadata": {
-        "description": "The SKU of the container registry."
+        "description": "Container Registry SKU"
       }
     },
     "adminUserEnabled": {
@@ -28,31 +28,26 @@
         false
       ],
       "metadata": {
-        "description": "The value that indicates whether the admin user is enabled."
+        "description": "Enable admin user"
       }
     }
   },
   "variables": {
     "apiVersion": {
-      "acr": "2017-10-01"
-    },
-    "acrSettings": {
-      "acrName": "[parameters('containerRegistryName')]",
-      "acrSku": "[parameters('containerRegistrySku')]",
-      "adminUser": "[parameters('adminUserEnabled')]"
+      "acr": "2019-05-01"
     }
   },
   "resources": [
     {
       "apiVersion": "[variables('apiVersion').acr]",
       "type": "Microsoft.ContainerRegistry/registries",
-      "name": "[variables('acrSettings').acrName]",
+      "name": "[parameters('name')]",
       "location": "[resourceGroup().location]",
       "sku": {
-        "name": "[variables('acrSettings').acrSku]"
+        "name": "[parameters('sku')]"
       },
       "properties": {
-        "adminUserEnabled": "[variables('acrSettings').adminUser]"
+        "adminUserEnabled": "[parameters('adminUserEnabled')]"
       }
     }
   ]
