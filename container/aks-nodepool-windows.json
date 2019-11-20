@@ -25,7 +25,8 @@
           ],
           "enableAutoScaling": true,
           "maxCount": 6,
-          "minCount": 3
+          "minCount": 3,
+          "taints": null
         }
       ]
     },
@@ -80,7 +81,8 @@
         "maxCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maxCount, json('null'))]",
         "minCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].minCount, json('null'))]",
         "type": "VirtualMachineScaleSets",
-        "availabilityZones": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]"
+        "availabilityZones": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]",
+        "nodeTaints": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].taints]"
       }
     }
   ],
