@@ -1,0 +1,204 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "type": "string",
+      "metadata": {
+        "description": "AKS cluster name"
+      }
+    },
+    "kubernetesVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Kubernetes version"
+      },
+      "defaultValue": "1.14.8"
+    },
+    "agentPoolProfiles": {
+      "type": "array",
+      "metadata": {
+        "description": "Define one or multiple node pools"
+      },
+      "defaultValue": [
+        {
+          "nodeCount": 3,
+          "nodeVmSize": "Standard_D2_v3",
+          "nodeOsType": "Linux",
+          "availabilityZones": [
+            "1",
+            "2",
+            "3"
+          ],
+          "enableAutoScaling": true,
+          "maxCount": 6,
+          "minCount": 3
+        }
+      ]
+    },
+    "workspaceResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace resource group name"
+      }
+    },
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Log Analytics workspace name that has the Container Insights solution enabled"
+      }
+    },
+    "vnetResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network resource group name"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      }
+    },
+    "vnetSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network subnet name"
+      }
+    },
+    "servicePrincipalClientId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Servive Principal client id"
+      }
+    },
+    "servicePrincipalClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Service Principal client secret"
+      }
+    },
+    "aadClientAppId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AAD client application id"
+      }
+    },
+    "aadServerAppId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AAD server application id"
+      }
+    },
+    "aadServerAppSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AAD server application secret"
+      }
+    },
+    "aadTenantId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "AAD tenant id"
+      }
+    },
+    "windowsProfileAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for Windows Server nodes"
+      },
+      "defaultValue": "[newGuid()]"
+    }
+  },
+  "variables": {
+    "apiVersion": {
+      "aks": "2019-08-01"
+    },
+    "agentPoolProfiles": {
+      "vnetSubnetId": "[concat(resourceId(parameters('vnetResourceGroupName'),'Microsoft.Network/virtualNetworks',parameters('vnetName')),'/subnets/',parameters('vnetSubnetName'))]"
+    },
+    "cluster": {
+      "workspaceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces',parameters('workspaceName'))]"
+    },
+    "outputs": {
+      "resourceId": "[resourceId('Microsoft.ContainerService/managedClusters/',parameters('name'))]"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion').aks]",
+      "type": "Microsoft.ContainerService/managedClusters",
+      "name": "[parameters('name')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "nodeResourceGroup": "[concat(parameters('name'),'-worker')]",
+        "kubernetesVersion": "[parameters('kubernetesVersion')]",
+        "enableRBAC": true,
+        "dnsPrefix": "[parameters('name')]",
+        "addonProfiles": {
+          "kubeDashboard": {
+            "enabled": false
+          },
+          "omsagent": {
+            "enabled": true,
+            "config": {
+              "logAnalyticsWorkspaceResourceID": "[variables('cluster').workspaceId]"
+            }
+          }
+        },
+        "copy": [
+          {
+            "name": "agentPoolProfiles",
+            "count": "[length(parameters('agentPoolProfiles'))]",
+            "input": {
+              "name": "[concat('pool',add(copyIndex('agentPoolProfiles'),1))]",
+              "maxPods": 250,
+              "osDiskSizeGB": 128,
+              "count": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeCount]",
+              "vmSize": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeVmSize]",
+              "osType": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeOsType]",
+              "vnetSubnetID": "[variables('agentPoolProfiles').vnetSubnetId]",
+              "enableAutoScaling": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, json('null'))]",
+              "maxCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maxCount, json('null'))]",
+              "minCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].minCount, json('null'))]",
+              "type": "VirtualMachineScaleSets",
+              "availabilityZones": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]"
+            }
+          }
+        ],
+        "networkProfile": {
+          "loadBalancerSku": "standard",
+          "networkPlugin": "azure",
+          "networkPolicy": "calico",
+          "serviceCidr": "10.0.0.0/16",
+          "dnsServiceIp": "10.0.0.10",
+          "dockerBridgeCidr": "172.17.0.1/16"
+        },
+        "windowsProfile": {
+          "adminUsername": "azureuser",
+          "adminPassword": "[parameters('windowsProfileAdminPassword')]"
+        },
+        "servicePrincipalProfile": {
+          "clientId": "[parameters('servicePrincipalClientId')]",
+          "secret": "[parameters('servicePrincipalClientSecret')]"
+        },
+        "aadProfile": {
+          "clientAppId": "[parameters('aadClientAppId')]",
+          "serverAppId": "[parameters('aadServerAppId')]",
+          "serverAppSecret": "[parameters('aadServerAppSecret')]",
+          "tenantId": "[parameters('aadTenantId')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "name": {
+      "type": "string",
+      "value": "[parameters('name')]"
+    },
+    "resourceId": {
+      "type": "string",
+      "value": "[variables('outputs').resourceId]"
+    }
+  }
+}
