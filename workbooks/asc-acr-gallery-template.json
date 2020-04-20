@@ -1,0 +1,546 @@
+{
+    "version": "Notebook/1.0",
+    "items": [
+        {
+            "type": 1,
+            "content": {
+                "json": "# Azure Security Center - ACR Scan Results"
+            },
+            "name": "text - 0"
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "securityresources\n| where type == \"microsoft.security/securitystatusessummaries\"\n| where name == \"Microsoft_ContainerRegistry_registries\"\n| extend result=parsejson(properties.resourceHealthSummary)\n| project Subscription=subscriptionId, Healthy=result.healthy, High=result.high, Medium=result.medium, Low=result.low, None=result.none",
+                "size": 4,
+                "title": "ACR Issue - Overview",
+                "queryType": 1,
+                "resourceType": "microsoft.resourcegraph/resources",
+                "crossComponentResources": [
+                    "value::all"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                    "formatters": [
+                        {
+                            "columnMatch": "Subscription",
+                            "formatter": 0,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Healthy",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "is Empty",
+                                        "thresholdValue": "0",
+                                        "representation": "more",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "success",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "High",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "is Empty",
+                                        "thresholdValue": "0",
+                                        "representation": "more",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "error",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "Medium",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "is Empty",
+                                        "representation": "more",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "warning",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "Low",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "is Empty",
+                                        "representation": "more",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "1",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "None",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "is Empty",
+                                        "representation": "more",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "unknown",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "graphSettings": {
+                    "type": 0
+                },
+                "mapSettings": {
+                    "locInfo": "LatLong"
+                }
+            },
+            "name": "overview"
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "securityresources\n| where type == \"microsoft.security/securitystatuses\"\n| where properties.type == \"Microsoft_ContainerRegistry_registries\"\n| mv-expand properties.policyAssessments\n| mv-expand properties_policyAssessments.assessmentKey\n| project ACR=name, Resource_Group=resourceGroup, Assessment_Result=properties_policyAssessments.assessmentResult, Assessment_Key=properties_policyAssessments_assessmentKey",
+                "size": 4,
+                "title": "ACR Assessment Results",
+                "exportFieldName": "Assessment_Key",
+                "exportParameterName": "Assessment_Key",
+                "queryType": 1,
+                "resourceType": "microsoft.resourcegraph/resources",
+                "crossComponentResources": [
+                    "value::all"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                    "formatters": [
+                        {
+                            "columnMatch": "ACR",
+                            "formatter": 0,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Resource_Group",
+                            "formatter": 0,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Assessment_Result",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "High",
+                                        "representation": "3",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Medium",
+                                        "representation": "2",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Low",
+                                        "representation": "info",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "Unknown",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "Assessment_Key",
+                            "formatter": 1,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "RG",
+                            "formatter": 0,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        }
+                    ]
+                },
+                "sortBy": []
+            },
+            "name": "assessment_results"
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "securityresources\n| where type == \"microsoft.security/assessments\"\n| where id has \"{Assessment_Key}\"\n| project Severity=properties.metadata.severity,\n    Implementation_Effort=properties.metadata.implementationEffort,\n    User_Impact=properties.metadata.userImpact,\n    Threats=strcat_array(properties.metadata.threats, \", \"),\n    Link=strcat(\"https://\",properties.links.azurePortal)",
+                "size": 4,
+                "title": "ACR - Assessment Details",
+                "queryType": 1,
+                "resourceType": "microsoft.resourcegraph/resources",
+                "crossComponentResources": [
+                    "value::all"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                    "formatters": [
+                        {
+                            "columnMatch": "Severity",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "High",
+                                        "representation": "3",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Medium",
+                                        "representation": "2",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Low",
+                                        "representation": "info",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "Unknown",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "Implementation_Effort",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "High",
+                                        "representation": "3",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Medium",
+                                        "representation": "2",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Low",
+                                        "representation": "1",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Moderate",
+                                        "representation": "2",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "Unknown",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "User_Impact",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "High",
+                                        "representation": "3",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Medium",
+                                        "representation": "2",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Low",
+                                        "representation": "info",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "Unknown",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "Threats",
+                            "formatter": 0,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Link",
+                            "formatter": 7,
+                            "formatOptions": {
+                                "linkTarget": "Url",
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Implemenetation_Effort",
+                            "formatter": 0,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        }
+                    ]
+                }
+            },
+            "name": "assessment_details"
+        },
+        {
+            "type": 3,
+            "content": {
+                "version": "KqlItem/1.0",
+                "query": "securityresources\n| where type == \"microsoft.security/assessments/subassessments\"\n| where id has \"{Assessment_Key}\" and isnotnull (properties.id)\n| mv-expand properties.additionalData.cve\n| mv-expand properties.additionalData.vendorReferences\n| project Time_Generated=properties.timeGenerated, Severity=properties.status.severity, ID=strcat_array(split(properties_additionalData_cve.link, \"=\", 1),\"\"),\n    Patchable=properties.additionalData.patchable, Issue=properties.displayName, Remediation=properties.remediation,\n    Image=properties.additionalData.repositoryName, Digest=properties.additionalData.imageDigest,\n    CVE=properties_additionalData_cve.link, Vendor=properties_additionalData_vendorReferences.link",
+                "size": 4,
+                "title": "ACR - Sub Assessment Details",
+                "queryType": 1,
+                "resourceType": "microsoft.resourcegraph/resources",
+                "crossComponentResources": [
+                    "value::all"
+                ],
+                "visualization": "table",
+                "gridSettings": {
+                    "formatters": [
+                        {
+                            "columnMatch": "Time_Generated",
+                            "formatter": 6,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Severity",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "High",
+                                        "representation": "3",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Medium",
+                                        "representation": "2",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "contains",
+                                        "thresholdValue": "Low",
+                                        "representation": "1",
+                                        "text": "{0}{1}"
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "Unknown",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "ID",
+                            "formatter": 1,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Patchable",
+                            "formatter": 18,
+                            "formatOptions": {
+                                "showIcon": true,
+                                "thresholdsOptions": "icons",
+                                "thresholdsGrid": [
+                                    {
+                                        "operator": "==",
+                                        "thresholdValue": "false",
+                                        "representation": "disabled",
+                                        "text": ""
+                                    },
+                                    {
+                                        "operator": "==",
+                                        "thresholdValue": "true",
+                                        "representation": "Available",
+                                        "text": ""
+                                    },
+                                    {
+                                        "operator": "Default",
+                                        "thresholdValue": null,
+                                        "representation": "unknown",
+                                        "text": "{0}{1}"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "columnMatch": "Issue",
+                            "formatter": 1,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Remediation",
+                            "formatter": 1,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Image",
+                            "formatter": 1,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Digest",
+                            "formatter": 1,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "CVE",
+                            "formatter": 7,
+                            "formatOptions": {
+                                "linkTarget": "Url",
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Vendor",
+                            "formatter": 7,
+                            "formatOptions": {
+                                "linkTarget": "Url",
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "ACR",
+                            "formatter": 1,
+                            "formatOptions": {
+                                "showIcon": true
+                            }
+                        },
+                        {
+                            "columnMatch": "Link",
+                            "formatter": 7,
+                            "formatOptions": {
+                                "linkTarget": "Resource",
+                                "showIcon": true
+                            }
+                        }
+                    ]
+                }
+            },
+            "name": "subassessment_details"
+        }
+    ],
+    "styleSettings": {
+        "progressStyle": "spinner"
+    },
+    "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}
