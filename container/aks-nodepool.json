@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "name": {
@@ -15,16 +15,24 @@
       },
       "defaultValue": [
         {
+          "name": "nodepool1",
+          "orchestratorVersion": "1.18.6",
           "nodeCount": 3,
-          "nodeVmSize": "Standard_D2_v3",
+          "nodeVmSize": "Standard_D4_v3",
           "availabilityZones": [
             "1",
             "2",
             "3"
           ],
+          "osType": "Linux",
           "enableAutoScaling": true,
           "maxCount": 6,
-          "minCount": 3
+          "minCount": 3,
+          "mode": "System",
+          "nodeLabels": {
+            "environment": "demo"
+          },
+          "nodeTaints": []
         }
       ]
     },
@@ -49,37 +57,42 @@
   },
   "variables": {
     "apiVersion": {
-      "aks": "2019-08-01"
+      "aks": "2020-04-01"
     },
     "agentPoolProfiles": {
-      "vnetSubnetId": "[concat(resourceId(parameters('vnetResourceGroupName'),'Microsoft.Network/virtualNetworks',parameters('vnetName')),'/subnets/',parameters('vnetSubnetName'))]"
+      "vnetSubnetId": "[concat(resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('vnetSubnetName'))]"
     },
     "outputs": {
-      "resourceId": "[resourceId('Microsoft.ContainerService/managedClusters/',parameters('name'))]"
+      "resourceId": "[resourceId('Microsoft.ContainerService/managedClusters/', parameters('name'))]"
     }
   },
   "resources": [
     {
       "apiVersion": "[variables('apiVersion').aks]",
       "type": "Microsoft.ContainerService/managedClusters/agentPools",
-      "name": "[concat(parameters('name'),'/nodepool',add(copyIndex('agentPoolProfiles'),1))]",
+      "name": "[concat(parameters('name'), '/', if(equals(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].osType, 'Linux'), if(lessOrEquals(length(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name), 12), parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, substring(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, 0, 12)), if(lessOrEquals(length(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name), 6), parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, substring(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, 0, 6))))]",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "agentPoolProfiles",
         "count": "[length(parameters('agentPoolProfiles'))]"
       },
       "properties": {
+        "orchestratorVersion": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].orchestratorVersion]",
         "maxPods": 250,
         "osDiskSizeGB": 128,
         "count": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeCount]",
         "vmSize": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeVmSize]",
-        "osType": "Linux",
+        "osType": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].osType]",
         "vnetSubnetID": "[variables('agentPoolProfiles').vnetSubnetId]",
         "enableAutoScaling": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, json('null'))]",
         "maxCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maxCount, json('null'))]",
         "minCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].minCount, json('null'))]",
         "type": "VirtualMachineScaleSets",
-        "availabilityZones": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]"
+        "availabilityZones": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]",
+        "mode": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].mode]",
+        "enableNodePublicIP": false,
+        "nodeLabels": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeLabels]",
+        "nodeTaints": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeTaints]"
       }
     }
   ],

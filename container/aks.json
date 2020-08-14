@@ -1,5 +1,5 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "name": {
@@ -12,8 +12,7 @@
       "type": "string",
       "metadata": {
         "description": "Kubernetes version"
-      },
-      "defaultValue": "1.14.8"
+      }
     },
     "agentPoolProfiles": {
       "type": "array",
@@ -22,16 +21,23 @@
       },
       "defaultValue": [
         {
+          "name": "nodepool1",
           "nodeCount": 3,
-          "nodeVmSize": "Standard_D2_v3",
+          "nodeVmSize": "Standard_D4_v3",
           "availabilityZones": [
             "1",
             "2",
             "3"
           ],
+          "osType": "Linux",
           "enableAutoScaling": true,
           "maxCount": 6,
-          "minCount": 3
+          "minCount": 3,
+          "mode": "System",
+          "nodeLabels": {
+            "environment": "demo"
+          },
+          "nodeTaints": []
         }
       ]
     },
@@ -45,6 +51,18 @@
       "type": "string",
       "metadata": {
         "description": "Log Analytics workspace name that has the Container Insights solution enabled"
+      }
+    },
+    "acrResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Container Registry resource group name"
+      }
+    },
+    "acrName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Container Registry name"
       }
     },
     "vnetResourceGroupName": {
@@ -65,55 +83,61 @@
         "description": "Virtual Network subnet name"
       }
     },
-    "servicePrincipalClientId": {
-      "type": "securestring",
+    "controlPlaneSku": {
+      "type": "string",
       "metadata": {
-        "description": "Servive Principal client id"
-      }
+        "description": "Free or SLA covered control plane mode"
+      },
+      "allowedValues": [
+        "Free",
+        "Paid"
+      ],
+      "defaultValue": "Free"
     },
-    "servicePrincipalClientSecret": {
-      "type": "securestring",
+    "aksPolicy": {
+      "type": "bool",
       "metadata": {
-        "description": "Service Principal client secret"
-      }
+        "description": "Enable the AKS Azure Policy add-on"
+      },
+      "defaultValue": false
     },
-    "aadClientAppId": {
-      "type": "securestring",
+    "adminGroups": {
+      "type": "array",
       "metadata": {
-        "description": "AAD client application id"
-      }
+        "description": "AAD group object ids which should be added to the Kubernetes cluster-admin role"
+      },
+      "defaultValue": []
     },
-    "aadServerAppId": {
-      "type": "securestring",
+    "ipWhitelist": {
+      "type": "array",
       "metadata": {
-        "description": "AAD server application id"
-      }
+        "description": "Whitelist IP address ranges from which you like to access the AKS API server endpoint"
+      },
+      "defaultValue": []
     },
-    "aadServerAppSecret": {
-      "type": "securestring",
+    "privateCluster": {
+      "type": "bool",
       "metadata": {
-        "description": "AAD server application secret"
-      }
-    },
-    "aadTenantId": {
-      "type": "securestring",
-      "metadata": {
-        "description": "AAD tenant id"
-      }
+        "description": "Whether the AKS API server endpoint should have a private IP or public IP address"
+      },
+      "defaultValue": false
     }
   },
   "variables": {
     "apiVersion": {
-      "aks": "2019-08-01"
+      "aks": "2020-04-01",
+      "rbac": "2020-04-01-preview",
+      "deployments": "2020-06-01"
     },
     "agentPoolProfiles": {
-      "vnetSubnetId": "[concat(resourceId(parameters('vnetResourceGroupName'),'Microsoft.Network/virtualNetworks',parameters('vnetName')),'/subnets/',parameters('vnetSubnetName'))]"
+      "vnetSubnetId": "[concat(resourceId(parameters('vnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('vnetSubnetName'))]"
     },
     "cluster": {
-      "workspaceId": "[resourceId(parameters('workspaceResourceGroup'),'Microsoft.OperationalInsights/workspaces',parameters('workspaceName'))]"
+      "workspaceId": "[resourceId(parameters('workspaceResourceGroup'), 'Microsoft.OperationalInsights/workspaces', parameters('workspaceName'))]",
+      "acrId": "[resourceId(parameters('acrResourceGroupName'), 'Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
     },
     "outputs": {
-      "resourceId": "[resourceId('Microsoft.ContainerService/managedClusters/',parameters('name'))]"
+      "resourceId": "[resourceId('Microsoft.ContainerService/managedClusters/' ,parameters('name'))]"
     }
   },
   "resources": [
@@ -123,7 +147,7 @@
       "name": "[parameters('name')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "nodeResourceGroup": "[concat(parameters('name'),'-worker')]",
+        "nodeResourceGroup": "[concat(parameters('name'), '-worker')]",
         "kubernetesVersion": "[parameters('kubernetesVersion')]",
         "enableRBAC": true,
         "dnsPrefix": "[parameters('name')]",
@@ -136,6 +160,12 @@
             "config": {
               "logAnalyticsWorkspaceResourceID": "[variables('cluster').workspaceId]"
             }
+          },
+          "azurepolicy": {
+            "enabled": "[parameters('aksPolicy')]",
+            "config": {
+              "version": "v2"
+            }
           }
         },
         "copy": [
@@ -143,38 +173,124 @@
             "name": "agentPoolProfiles",
             "count": "[length(parameters('agentPoolProfiles'))]",
             "input": {
-              "name": "[concat('nodepool',add(copyIndex('agentPoolProfiles'),1))]",
+              "name": "[if(equals(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].osType, 'Linux'), if(lessOrEquals(length(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name), 12), parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, substring(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, 0, 12)), if(lessOrEquals(length(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name), 6), parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, substring(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].name, 0, 6)))]",
+              "orchestratorVersion": "[parameters('kubernetesVersion')]",
               "maxPods": 250,
               "osDiskSizeGB": 128,
               "count": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeCount]",
               "vmSize": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeVmSize]",
-              "osType": "Linux",
+              "osType": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].osType]",
               "vnetSubnetID": "[variables('agentPoolProfiles').vnetSubnetId]",
               "enableAutoScaling": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, json('null'))]",
               "maxCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].maxCount, json('null'))]",
               "minCount": "[if(parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].enableAutoScaling, parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].minCount, json('null'))]",
               "type": "VirtualMachineScaleSets",
-              "availabilityZones": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]"
+              "availabilityZones": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].availabilityZones]",
+              "mode": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].mode]",
+              "enableNodePublicIP": false,
+              "nodeLabels": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeLabels]",
+              "nodeTaints": "[parameters('agentPoolProfiles')[copyIndex('agentPoolProfiles')].nodeTaints]"
             }
           }
         ],
         "networkProfile": {
           "loadBalancerSku": "standard",
+          "outboundType": "loadBalancer",
           "networkPlugin": "azure",
           "networkPolicy": "calico",
           "serviceCidr": "10.0.0.0/16",
           "dnsServiceIp": "10.0.0.10",
           "dockerBridgeCidr": "172.17.0.1/16"
         },
-        "servicePrincipalProfile": {
-          "clientId": "[parameters('servicePrincipalClientId')]",
-          "secret": "[parameters('servicePrincipalClientSecret')]"
-        },
         "aadProfile": {
-          "clientAppId": "[parameters('aadClientAppId')]",
-          "serverAppId": "[parameters('aadServerAppId')]",
-          "serverAppSecret": "[parameters('aadServerAppSecret')]",
-          "tenantId": "[parameters('aadTenantId')]"
+          "managed": true,
+          "adminGroupObjectIDs": "[parameters('adminGroups')]"
+        },
+        "apiServerAccessProfile": {
+          "authorizedIPRanges": "[if(parameters('privateCluster'), json('[]'), parameters('ipWhitelist'))]",
+          "enablePrivateCluster": "[parameters('privateCluster')]"
+        }
+      },
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "sku": {
+        "name": "Basic",
+        "tier": "[parameters('controlPlaneSku')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').rbac]",
+      "type": "Microsoft.ContainerService/managedClusters/providers/roleAssignments",
+      "name": "[concat(parameters('name'), '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('name'), 'Monitoring Metrics Publisher'))]",
+      "properties": {
+        // Monitoring Metrics Publisher = 3913510d-42f4-4e42-8a64-420c390055eb
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '3913510d-42f4-4e42-8a64-420c390055eb')]",
+        "principalId": "[reference(concat('Microsoft.ContainerService/managedClusters/', parameters('name')), variables('apiVersion').aks, 'Full').identity.principalId]",
+        "scope": "[variables('outputs').resourceId]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').deployments]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat(parameters('name'), '-vnet-subnet-rbac')]",
+      "resourceGroup": "[parameters('vnetResourceGroupName')]",
+      "dependsOn": [
+        "[concat('Microsoft.ContainerService/managedClusters/', parameters('name'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "apiVersion": "[variables('apiVersion').rbac]",
+              "type": "Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments",
+              "name": "[concat(parameters('vnetName'), '/', parameters('vnetSubnetName'), '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('name'), 'Network Contributor'))]",
+              "properties": {
+                // Network Contributor = 4d97b98b-1d4f-4787-a291-c67834d212e7
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+                "principalId": "[reference(concat('Microsoft.ContainerService/managedClusters/', parameters('name')), variables('apiVersion').aks, 'Full').identity.principalId]",
+                "scope": "[variables('agentPoolProfiles').vnetSubnetId]"
+              }
+            }
+          ],
+          "outputs": {}
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').deployments]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat(parameters('name'), '-acr-rbac')]",
+      "resourceGroup": "[parameters('acrResourceGroupName')]",
+      "dependsOn": [
+        "[concat('Microsoft.ContainerService/managedClusters/', parameters('name'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "apiVersion": "[variables('apiVersion').rbac]",
+              "type": "Microsoft.ContainerRegistry/registries/providers/roleAssignments",
+              "name": "[concat(parameters('acrName'), '/Microsoft.Authorization/', guid(resourceGroup().id, parameters('name'), 'AcrPull'))]",
+              "properties": {
+                // AcrPull = 7f951dda-4ed3-4680-a7ca-43fe172d538d
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')]",
+                "principalId": "[reference(concat('Microsoft.ContainerService/managedClusters/', parameters('name')), variables('apiVersion').aks).identityProfile.kubeletidentity.objectId]",
+                "scope": "[variables('cluster').acrId]"
+              }
+            }
+          ],
+          "outputs": {}
         }
       }
     }
