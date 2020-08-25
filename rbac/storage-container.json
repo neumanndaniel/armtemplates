@@ -13,7 +13,7 @@
       "properties": {
         "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
         "principalId": "00000000-0000-0000-0000-000000000000",
-        "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/aks/providers/Microsoft.Storage/storageAccounts/storageaccountname/blobServices/default/containers/containername"
+        "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/resourcegroupname/providers/Microsoft.Storage/storageAccounts/storageaccountname/blobServices/default/containers/containername"
       }
     }
   ]
