@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "name": "storageaccountname/default/containername/Microsoft.Authorization/f586cdf6-8211-4eab-be6a-d4f8d0f921bb",
+      "type": "Microsoft.Storage/storageAccounts/blobServices/containers/providers/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+        "principalId": "00000000-0000-0000-0000-000000000000",
+        "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/aks/providers/Microsoft.Storage/storageAccounts/storageaccountname/blobServices/default/containers/containername"
+      }
+    }
+  ]
+}
