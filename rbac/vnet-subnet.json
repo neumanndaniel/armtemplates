@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "name": "vnetname/subnetname/Microsoft.Authorization/bf99d7eb-7c96-472f-b655-ce306fc65b37",
+      "type": "Microsoft.Network/virtualNetworks/subnets/providers/roleAssignments",
+      "apiVersion": "2020-04-01-preview",
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '4d97b98b-1d4f-4787-a291-c67834d212e7')]",
+        "principalId": "00000000-0000-0000-0000-000000000000",
+        "scope": "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/resourcegroupname/providers/Microsoft.Network/virtualNetworks/vnetname/subnets/subnetname"
+      }
+    }
+  ]
+}
