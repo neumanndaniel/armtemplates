@@ -1,0 +1,108 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "basetime": {
+      "type": "string",
+      "defaultValue": "[utcNow('u')]"
+    },
+    "nbfDuration": {
+      "type": "string",
+      "defaultValue": "PT0H"
+    },
+    "expDuration": {
+      "type": "string",
+      "defaultValue": "P2Y"
+    }
+  },
+  "variables": {
+    //nbf - Unix time converter
+    "nbfUtc": {
+      "year": "[int(dateTimeAdd(parameters('baseTime'), parameters('nbfDuration'), 'yyyy'))]",
+      "month": "[int(dateTimeAdd(parameters('baseTime'), parameters('nbfDuration'), 'MM'))]",
+      "day": "[int(dateTimeAdd(parameters('baseTime'), parameters('nbfDuration'), 'dd'))]",
+      "hour": "[int(dateTimeAdd(parameters('baseTime'), parameters('nbfDuration'), 'HH'))]",
+      "minute": "[int(dateTimeAdd(parameters('baseTime'), parameters('nbfDuration'), 'mm'))]",
+      "second": "[int(dateTimeAdd(parameters('baseTime'), parameters('nbfDuration'), 'ss'))]"
+    },
+    "nbfCalculation": {
+      "yearCalc": "[sub(variables('nbfUtc').year, 1970)]",
+      "leapYears": "[div(sub(variables('nbfUtc').year, 1970), 4)]",
+      "monthCalc": "[string(sub(variables('nbfUtc').month, 1))]",
+      "dayCalc": "[sub(variables('nbfUtc').day, 1)]"
+    },
+    "nbfIntermediateCalculation": {
+      "yearInSeconds": "[add(mul(mul(variables('nbfCalculation').yearCalc, 365), 86400), if(equals(variables('nbfModLeapYear'), 0),mul(variables('nbfCalculation').leapYears, 86400),mul(sub(variables('nbfCalculation').leapYears, 1), 86400)))]",
+      "monthInSeconds": "[mul (variables(concat('nbf',variables('nbfCalculation').monthCalc)), 86400)]",
+      "dayInSeconds": "[mul(variables('nbfCalculation').dayCalc, 86400)]",
+      "hourInSeconds": "[mul(variables('nbfUtc').hour, 3600)]",
+      "minutesInSeconds": "[mul(variables('nbfUtc').minute, 60)]"
+    },
+    "nbfFinalCalculation": "[add(add(add(add(add (variables('nbfUtc').second, variables('nbfIntermediateCalculation').minutesInSeconds), variables('nbfIntermediateCalculation').hourInSeconds), variables('nbfIntermediateCalculation').dayInSeconds), variables('nbfIntermediateCalculation').monthInSeconds), variables('nbfIntermediateCalculation').yearInSeconds)]",
+    "nbfModLeapYear": "[mod(variables('nbfUtc').year, 4)]",
+    "nbf1": 31,
+    "nbf2": "[add(31, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf3": "[add(62, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf4": "[add(92, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf5": "[add(123, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf6": "[add(153, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf7": "[add(184, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf8": "[add(215, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf9": "[add(245, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf10": "[add(276, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf11": "[add(306, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    "nbf12": "[add(337, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
+    // exp - Unix time converter
+    "expUtc": {
+      "year": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'yyyy'))]",
+      "month": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'MM'))]",
+      "day": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'dd'))]",
+      "hour": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'HH'))]",
+      "minute": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'mm'))]",
+      "second": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'ss'))]"
+    },
+    "expCalculation": {
+      "yearCalc": "[sub(variables('expUtc').year, 1970)]",
+      "leapYears": "[div(sub(variables('expUtc').year, 1970), 4)]",
+      "monthCalc": "[string(sub(variables('expUtc').month, 1))]",
+      "dayCalc": "[sub(variables('expUtc').day, 1)]"
+    },
+    "expIntermediateCalculation": {
+      "yearInSeconds": "[add(mul(mul(variables('expCalculation').yearCalc, 365), 86400), if(equals(variables('expModLeapYear'), 0),mul(variables('expCalculation').leapYears, 86400),mul(sub(variables('expCalculation').leapYears, 1), 86400)))]",
+      "monthInSeconds": "[mul (variables(concat('exp',variables('expCalculation').monthCalc)), 86400)]",
+      "dayInSeconds": "[mul(variables('expCalculation').dayCalc, 86400)]",
+      "hourInSeconds": "[mul(variables('expUtc').hour, 3600)]",
+      "minutesInSeconds": "[mul(variables('expUtc').minute, 60)]"
+    },
+    "expFinalCalculation": "[add(add(add(add(add (variables('expUtc').second, variables('expIntermediateCalculation').minutesInSeconds), variables('expIntermediateCalculation').hourInSeconds), variables('expIntermediateCalculation').dayInSeconds), variables('expIntermediateCalculation').monthInSeconds), variables('expIntermediateCalculation').yearInSeconds)]",
+    "expModLeapYear": "[mod(variables('nbfUtc').year, 4)]",
+    "exp1": 31,
+    "exp2": "[add(31, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp3": "[add(62, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp4": "[add(92, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp5": "[add(123, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp6": "[add(153, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp7": "[add(184, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp8": "[add(215, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp9": "[add(245, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp10": "[add(276, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp11": "[add(306, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
+    "exp12": "[add(337, if(equals(variables('expModLeapYear'), 0), 29, 28))]"
+  },
+  "resources": [
+  ],
+  "outputs": {
+    "utc": {
+      "type": "string",
+      "value": "[parameters('basetime')]"
+    },
+    "nbf": {
+      "type": "int",
+      "value": "[variables('nbfFinalCalculation')]"
+    },
+    "exp": {
+      "type": "int",
+      "value": "[variables('expFinalCalculation')]"
+    }
+  }
+}
