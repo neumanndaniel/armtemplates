@@ -85,9 +85,9 @@
       "kind": "functionapp",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('functionName'))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNames').function)]",
-        "[resourceId('microsoft.insights/components', parameters('functionName'))]"
+        "[concat('Microsoft.Web/serverfarms', parameters('functionName'))]",
+        "[concat('Microsoft.Storage/storageAccounts', variables('storageAccountNames').function)]",
+        "[concat('microsoft.insights/components', parameters('functionName'))]"
       ],
       "identity": {
         "type": "SystemAssigned"
