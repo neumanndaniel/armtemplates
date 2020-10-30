@@ -137,9 +137,9 @@
     }
   ],
   "outputs": {
-    "functionName": {
+    "functionPrincipalId": {
       "type": "string",
-      "value": "[parameters('functionName')]"
+      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionName')), variables('apiVersion').sites, 'Full').identity.principalId]"
     }
   }
 }
