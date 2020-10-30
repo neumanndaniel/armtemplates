@@ -3,15 +3,13 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "functionName": {
-      "type": "string",
-      "defaultValue": "aks-snapshot-backup"
+      "type": "string"
     },
     "timeZone": {
       "type": "string",
       "metadata": {
         "description": "For the correct time zone string check https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-vista/cc749073(v=ws.10)"
-      },
-      "defaultValue": "W. Europe Standard Time"
+      }
     }
   },
   "variables": {
