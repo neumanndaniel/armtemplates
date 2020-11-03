@@ -1,0 +1,201 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourceGroupName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "functionName": {
+      "type": "string"
+    },
+    "timeZone": {
+      "type": "string",
+      "metadata": {
+        "description": "For the correct time zone string check https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-vista/cc749073(v=ws.10)"
+      },
+      "defaultValue": "W. Europe Standard Time"
+    },
+    "operatorRoleDefinitionGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]"
+    },
+    "operatorRoleAssignmentGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]"
+    },
+    "contributorRoleDefinitionGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]"
+    },
+    "contributorRoleAssignmentGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]"
+    },
+    "storageContributorRoleAssignmentGuid": {
+      "type": "string",
+      "defaultValue": "[newGuid()]"
+    },
+    "customRolesCreated": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "roleAssignmentDone": {
+      "type": "bool",
+      "defaultValue": false
+    }
+  },
+  "variables": {
+    "apiVersion": {
+      "resourceGroups": "2020-06-01",
+      "deployments": "2020-06-01",
+      "roleAssignments": "2020-04-01-preview",
+      "roleDefinitions": "2018-01-01-preview"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion').resourceGroups]",
+      "type": "Microsoft.Resources/resourceGroups",
+      "name": "[parameters('resourceGroupName')]",
+      "location": "[parameters('location')]"
+    },
+    {
+      "apiVersion": "[variables('apiVersion').roleDefinitions]",
+      "type": "Microsoft.Authorization/roleDefinitions",
+      "name": "[parameters('contributorRoleDefinitionGuid')]",
+      "properties": {
+        "roleName": "AKS Snapshot Backup Contributor",
+        "description": "Grants permission to manage snapshots",
+        "type": "customRole",
+        "permissions": [
+          {
+            "actions": [
+              "Microsoft.Compute/snapshots/read",
+              "Microsoft.Compute/snapshots/write",
+              "Microsoft.Compute/snapshots/delete"
+            ]
+          }
+        ],
+        "assignableScopes": [
+          "[subscription().id]"
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').roleDefinitions]",
+      "type": "Microsoft.Authorization/roleDefinitions",
+      "name": "[parameters('operatorRoleDefinitionGuid')]",
+      "properties": {
+        "roleName": "AKS Snapshot Backup Operator",
+        "description": "Grants permission to take snapshots from managed disks",
+        "type": "customRole",
+        "permissions": [
+          {
+            "actions": [
+              "Microsoft.Compute/disks/beginGetAccess/action",
+              "Microsoft.Compute/disks/read"
+            ]
+          }
+        ],
+        "assignableScopes": [
+          "[subscription().id]"
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').roleAssignments]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "name": "[parameters('operatorRoleAssignmentGuid')]",
+      "dependsOn": [
+        "[concat('Microsoft.Authorization/roleDefinitions/', parameters('operatorRoleDefinitionGuid'))]",
+        "Microsoft.Resources/deployments/aks-backup-snapshot-infrastructure-deployment"
+      ],
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', parameters('operatorRoleDefinitionGuid'))]",
+        "principalId": "[reference('aks-backup-snapshot-infrastructure-deployment').outputs.functionPrincipalId.value]",
+        "scope": "[subscription().id]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').deployments]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "aks-backup-snapshot-infrastructure-deployment",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/resourceGroups/', parameters('resourceGroupName'))]"
+      ],
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/neumanndaniel/armtemplates/master/aks-snapshot-backup/aks-snapshot-backup-infrastructure.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "functionName": {
+            "value": "[parameters('functionName')]"
+          },
+          "timeZone": {
+            "value": "[parameters('timeZone')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion').deployments]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "aks-backup-snapshot-infrastructure-rbac",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/resourceGroups/', parameters('resourceGroupName'))]",
+        "[concat('Microsoft.Authorization/roleDefinitions/', parameters('operatorRoleDefinitionGuid'))]",
+        "Microsoft.Resources/deployments/aks-backup-snapshot-infrastructure-deployment"
+      ],
+      "resourceGroup": "[parameters('resourceGroupName')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/neumanndaniel/armtemplates/master/aks-snapshot-backup/aks-snapshot-infrastructure-rbac.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "functionPrincipalId": {
+            "value": "[reference('aks-backup-snapshot-infrastructure-deployment').outputs.functionPrincipalId.value]"
+          },
+          "contributorRoleDefinitionGuid": {
+            "value": "[parameters('contributorRoleDefinitionGuid')]"
+          },
+          "contributorRoleAssignmentGuid": {
+            "value": "[parameters('contributorRoleAssignmentGuid')]"
+          },
+          "storageContributorRoleAssignmentGuid": {
+            "value": "[parameters('storageContributorRoleAssignmentGuid')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "operatorRoleDefinitionGuid": {
+      "type": "string",
+      "value": "[parameters('operatorRoleDefinitionGuid')]"
+    },
+    "operatorRoleAssignmentGuid": {
+      "type": "string",
+      "value": "[parameters('operatorRoleAssignmentGuid')]"
+    },
+    "contributorRoleDefinitionGuid": {
+      "type": "string",
+      "value": "[parameters('contributorRoleDefinitionGuid')]"
+    },
+    "contributorRoleAssignmentGuid": {
+      "type": "string",
+      "value": "[parameters('contributorRoleAssignmentGuid')]"
+    },
+    "storageContributorRoleAssignmentGuid": {
+      "type": "string",
+      "value": "[parameters('storageContributorRoleAssignmentGuid')]"
+    }
+  }
+}
