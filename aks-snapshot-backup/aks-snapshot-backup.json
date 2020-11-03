@@ -37,14 +37,6 @@
     "storageContributorRoleAssignmentGuid": {
       "type": "string",
       "defaultValue": "[newGuid()]"
-    },
-    "customRolesCreated": {
-      "type": "bool",
-      "defaultValue": false
-    },
-    "roleAssignmentDone": {
-      "type": "bool",
-      "defaultValue": false
     }
   },
   "variables": {
