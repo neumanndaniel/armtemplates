@@ -32,14 +32,15 @@
       "dayCalc": "[sub(variables('nbfUtc').day, 1)]"
     },
     "nbfIntermediateCalculation": {
-      "yearInSeconds": "[add(mul(mul(variables('nbfCalculation').yearCalc, 365), 86400), if(equals(variables('nbfModLeapYear'), 0),mul(variables('nbfCalculation').leapYears, 86400),mul(sub(variables('nbfCalculation').leapYears, 1), 86400)))]",
+      "yearInSeconds": "[add(mul(mul(variables('nbfCalculation').yearCalc, 365), 86400),if(equals(variables('nbfModLeapYear'), 1),mul(add(variables('nbfCalculation').leapYears, 1), 86400),mul(variables('nbfCalculation').leapYears, 86400)))]",
       "monthInSeconds": "[mul (variables(concat('nbf',variables('nbfCalculation').monthCalc)), 86400)]",
       "dayInSeconds": "[mul(variables('nbfCalculation').dayCalc, 86400)]",
       "hourInSeconds": "[mul(variables('nbfUtc').hour, 3600)]",
       "minutesInSeconds": "[mul(variables('nbfUtc').minute, 60)]"
     },
-    "nbfFinalCalculation": "[add(add(add(add(add (variables('nbfUtc').second, variables('nbfIntermediateCalculation').minutesInSeconds), variables('nbfIntermediateCalculation').hourInSeconds), variables('nbfIntermediateCalculation').dayInSeconds), variables('nbfIntermediateCalculation').monthInSeconds), variables('nbfIntermediateCalculation').yearInSeconds)]",
+    "nbfFinalCalculation": "[sub(add(add(add(add(add (variables('nbfUtc').second, variables('nbfIntermediateCalculation').minutesInSeconds), variables('nbfIntermediateCalculation').hourInSeconds), variables('nbfIntermediateCalculation').dayInSeconds), variables('nbfIntermediateCalculation').monthInSeconds), variables('nbfIntermediateCalculation').yearInSeconds),3600)]",
     "nbfModLeapYear": "[mod(variables('nbfUtc').year, 4)]",
+    "nbf0": 0,
     "nbf1": 31,
     "nbf2": "[add(31, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
     "nbf3": "[add(62, if(equals(variables('nbfModLeapYear'), 0), 29, 28))]",
@@ -61,21 +62,23 @@
       "minute": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'mm'))]",
       "second": "[int(dateTimeAdd(parameters('baseTime'), parameters('expDuration'), 'ss'))]"
     },
+    "expLeapYears": "[div(sub(variables('expUtc').year, 1970), 4)]",
     "expCalculation": {
       "yearCalc": "[sub(variables('expUtc').year, 1970)]",
       "leapYears": "[div(sub(variables('expUtc').year, 1970), 4)]",
       "monthCalc": "[string(sub(variables('expUtc').month, 1))]",
-      "dayCalc": "[sub(variables('expUtc').day, 1)]"
+      "dayCalc": "[if(equals(variables('expUtc').year,variables('nbfUtc').year),sub(variables('expUtc').day, 1),if(equals(variables('expModLeapYear'), 0),add(sub(variables('expLeapYears'),variables('nbfCalculation').leapYears),variables('expUtc').day),sub(variables('expUtc').day, 1)))]"
     },
     "expIntermediateCalculation": {
-      "yearInSeconds": "[add(mul(mul(variables('expCalculation').yearCalc, 365), 86400), if(equals(variables('expModLeapYear'), 0),mul(variables('expCalculation').leapYears, 86400),mul(sub(variables('expCalculation').leapYears, 1), 86400)))]",
+      "yearInSeconds": "[add(mul(mul(variables('expCalculation').yearCalc, 365), 86400),if(equals(variables('expModLeapYear'), 1),mul(add(variables('expCalculation').leapYears, 1), 86400),mul(variables('expCalculation').leapYears, 86400)))]",
       "monthInSeconds": "[mul (variables(concat('exp',variables('expCalculation').monthCalc)), 86400)]",
       "dayInSeconds": "[mul(variables('expCalculation').dayCalc, 86400)]",
       "hourInSeconds": "[mul(variables('expUtc').hour, 3600)]",
       "minutesInSeconds": "[mul(variables('expUtc').minute, 60)]"
     },
-    "expFinalCalculation": "[add(add(add(add(add (variables('expUtc').second, variables('expIntermediateCalculation').minutesInSeconds), variables('expIntermediateCalculation').hourInSeconds), variables('expIntermediateCalculation').dayInSeconds), variables('expIntermediateCalculation').monthInSeconds), variables('expIntermediateCalculation').yearInSeconds)]",
-    "expModLeapYear": "[mod(variables('nbfUtc').year, 4)]",
+    "expFinalCalculation": "[sub(add(add(add(add(add (variables('expUtc').second, variables('expIntermediateCalculation').minutesInSeconds), variables('expIntermediateCalculation').hourInSeconds), variables('expIntermediateCalculation').dayInSeconds), variables('expIntermediateCalculation').monthInSeconds), variables('expIntermediateCalculation').yearInSeconds),3600)]",
+    "expModLeapYear": "[mod(variables('expUtc').year, 4)]",
+    "exp0": 0,
     "exp1": 31,
     "exp2": "[add(31, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
     "exp3": "[add(62, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
@@ -89,8 +92,7 @@
     "exp11": "[add(306, if(equals(variables('expModLeapYear'), 0), 29, 28))]",
     "exp12": "[add(337, if(equals(variables('expModLeapYear'), 0), 29, 28))]"
   },
-  "resources": [
-  ],
+  "resources": [],
   "outputs": {
     "utc": {
       "type": "string",
