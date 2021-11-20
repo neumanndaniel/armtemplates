@@ -4,11 +4,17 @@
   "parameters": {
     "basetime": {
       "type": "string",
-      "defaultValue": "[utcNow('u')]"
+      "defaultValue": "[utcNow('u')]",
+      "metadata": {
+        "description": "Format for basetime must be 1970-01-01 00:00:00Z"
+      }
     },
     "nbfDuration": {
       "type": "string",
-      "defaultValue": "PT0H"
+      "defaultValue": "PT0H",
+      "allowedValues": [
+        "PT0H"
+      ]
     },
     "expDuration": {
       "type": "string",
