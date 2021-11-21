@@ -11,11 +11,17 @@
     },
     "nbfDuration": {
       "type": "string",
-      "defaultValue": "PT0H"
+      "defaultValue": "PT0H",
+      "allowedValues": [
+        "PT0H"
+      ]
     },
     "expDuration": {
       "type": "string",
-      "defaultValue": "P2Y"
+      "defaultValue": "P2Y",
+      "allowedValues": [
+        "P2Y"
+      ]
     }
   },
   "variables": {
@@ -36,7 +42,8 @@
       "yearCalc": "[sub(variables('nbfUtc').year, 1970)]",
       "leapYears": "[div(sub(variables('nbfUtc').year, 1970), 4)]",
       "monthCalc": "[string(sub(variables('nbfUtc').month, 1))]",
-      "dayCalc": "[if(equals(variables('nbfUtc').year,variables('basetimeYear')),sub(variables('nbfUtc').day, 1),if(equals(variables('nbfModLeapYear'), 0),add(sub(variables('nbfLeapYears'),variables('basetimeLeapYears')),variables('nbfUtc').day),sub(variables('nbfUtc').day, 1)))]"
+      // "dayCalc": "[if(equals(variables('nbfUtc').year,variables('basetimeYear')),sub(variables('nbfUtc').day, 1),if(equals(variables('nbfModLeapYear'), 0),add(sub(variables('nbfLeapYears'),variables('basetimeLeapYears')),variables('nbfUtc').day),sub(variables('nbfUtc').day, 1)))]"
+      "dayCalc": "[sub(variables('nbfUtc').day, 1)]"
     },
     "nbfIntermediateCalculation": {
       "yearInSeconds": "[add(mul(mul(variables('nbfCalculation').yearCalc, 365), 86400),if(equals(variables('nbfModLeapYear'), 1),mul(add(variables('nbfCalculation').leapYears, 1), 86400),mul(variables('nbfCalculation').leapYears, 86400)))]",
@@ -74,7 +81,7 @@
       "yearCalc": "[sub(variables('expUtc').year, 1970)]",
       "leapYears": "[div(sub(variables('expUtc').year, 1970), 4)]",
       "monthCalc": "[string(sub(variables('expUtc').month, 1))]",
-      "dayCalc": "[if(equals(variables('expUtc').year,variables('basetimeYear')),sub(variables('expUtc').day, 1),if(equals(variables('expModLeapYear'), 0),add(sub(variables('expLeapYears'),variables('basetimeLeapYears')),variables('expUtc').day),sub(variables('expUtc').day, 1)))]"
+      "dayCalc": "[if(equals(variables('expUtc').year,variables('basetimeYear')),sub(variables('expUtc').day, 1),if(equals(variables('expModLeapYear'), 0),add(sub(variables('expLeapYears'),variables('basetimeLeapYears')),if(greater(variables('expUtc').month,2),variables('expUtc').day,sub(variables('expUtc').day, 1))),sub(variables('expUtc').day, 1)))]"
     },
     "expIntermediateCalculation": {
       "yearInSeconds": "[add(mul(mul(variables('expCalculation').yearCalc, 365), 86400),if(equals(variables('expModLeapYear'), 1),mul(add(variables('expCalculation').leapYears, 1), 86400),mul(variables('expCalculation').leapYears, 86400)))]",
